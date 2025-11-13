@@ -1,12 +1,12 @@
-# vetcare
-AppWeb para la gestion de una veterinaria
+# VetCare
+Front de AppWeb para la gestion de una veterinaria
 
 ### Features
 
 - **Gestión de Pacientes**: Registrar y administrar mascotas con información detallada
 - **Historial Médico**: Mantener registro de consultas y tratamientos
 - **Citas y Turnos**: Sistema de reserva de citas para veterinario
-- **Gestión de Usuarios**: Control de acceso para administradores y veterinarios
+- **Gestión de Usuarios**: Control de acceso para administradores, veterinarios y clientes
 - **Reportes**: Generar reportes de actividades y pacientes
 - **Interfaz Responsiva**: Diseño adaptable a dispositivos móviles y desktop
 
@@ -16,7 +16,6 @@ AppWeb para la gestion de una veterinaria
 - **npm** versión 6 o superior
 - **Git** para clonar el repositorio
 - Navegador moderno (Chrome, Firefox, Safari, Edge)
-- Conexión a internet
 
 ### Pasos para correr el frontend
 #### 1. Clonar el repositorio
@@ -35,4 +34,3 @@ AppWeb para la gestion de una veterinaria
    ```bash
       npm run dev
    ```
-#### 5. Abre tu navegador y visita http://localhost:3000 para ver la aplicación en funcionamiento.

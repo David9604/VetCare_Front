@@ -1,4 +1,3 @@
-// ...new file...
 import React from 'react';
 
 const ServiceCard = ({ icon = 'description', title = 'Título', description = 'Descripción' }) => (
@@ -16,4 +15,3 @@ const ServiceCard = ({ icon = 'description', title = 'Título', description = 'D
 );
 
 export default ServiceCard;
-// ...new file...
