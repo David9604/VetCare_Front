@@ -13,7 +13,7 @@ El front debe consumir dichos endpoints REST, gestionar sesiones seguras, mostra
 ## 🧩 Tecnologías previstas
 
 - **Framework base:** React.js (o equivalente)
-- **Estilos:** Materialize CSS
+- **Estilos:** Tailwind CSS
 - **Comunicación con el backend:** Axios o Fetch API
 - **Gestión de estado:** React Context / Redux (opcional)
 - **Control de sesión:** JWT (JSON Web Token)
@@ -28,7 +28,7 @@ El front debe consumir dichos endpoints REST, gestionar sesiones seguras, mostra
 - Implementar **autenticación JWT** (login, logout y persistencia de sesión).
 - Mostrar **listados** de mascotas, servicios, citas y diagnósticos.
 - Diseñar **formularios interactivos y validados** para registros y ediciones.
-- Ofrecer una experiencia moderna y responsiva mediante **Materialize CSS**.
+- Ofrecer una experiencia moderna y responsiva mediante **Tailwind CSS**.
 - Manejar errores y respuestas del servidor (400, 401, 403, 404).
 
 ---
@@ -169,7 +169,7 @@ vetcare_front/
 │   ├── pages/            -> Páginas por rol (Dueño, Empleado, Veterinario, Admin)
 │   ├── context/          -> Autenticación y estado global
 │   ├── routes/           -> Sistema de rutas protegidas
-│   ├── styles/           -> Configuración Materialize
+│   ├── styles/           -> Configuración Tailwind
 │   └── App.jsx
 ├── public/
 │   └── index.html

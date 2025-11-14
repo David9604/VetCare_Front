@@ -1,0 +1,47 @@
+ENDPOINTS;;;;;
+1. Endpoints de Autenticaci¢n y Usuarios (/api/auth y /api/users);;;;;
+Estos son base para todos los roles. Requieren autenticaci¢n excepto register/login.;;;;;
+Endpoint;M‚todo;Descripci¢n;Request Body/Query Params;Respuesta (200 OK);C¢digos de Error
+POST /api/users/register;POST;Registra un nuevo usuario (rol USER por defecto).;"Body: UserRegisterDTO { ""name"": string, ""email"": string (£nico), ""password"": string, ""phone"": string (opcional), ""address"": string (opcional) }";"UserResponseDTO { ""id"": long, ""name"": string, ""email"": string, ... (sin password) }";400 (email duplicado), 500 (error servidor)
+POST /api/auth/login;POST;"Autentica usuario (devuelve mensaje de ‚xito; token JWT en header si configuras).";"Body: { ""email"": string, ""password"": string }";"{ ""message"": ""Login successful"", ""email"": string }";401 (credenciales inv lidas)
+GET /api/auth/login;GET;Obtiene datos del usuario actual (post-login).;Ninguno (usa auth token).;UserResponseDTO (perfil actual).;401 (no autenticado)
+POST /api/auth/logout;POST;Cierra sesi¢n.;Ninguno.;"{ ""message"": ""Logout successful"" }";401 (no autenticado)
+PUT /api/users/{id};PUT;Actualiza perfil (nombre, email, password, phone, address).;"Body: UserUpdateDTO { ""name"": string, ""email"": string, ""password"": string (opcional), ... }";UserResponseDTO actualizado.;403 (solo propio perfil), 404 (user no encontrado)
+GET /api/users/me;GET;Obtiene perfil del usuario actual.;Ninguno.;UserResponseDTO.;401 (no autenticado)
+;;;;;
+;;;;;
+2. Endpoints de Servicios (/api/services y /api/admin/services);;;;;
+"Cat logo de servicios (e.g., vacunaci¢n, ba¤o). Listar/ver requiere auth; CRUD solo admin.";;;;;
+Endpoint;M‚todo;Descripci¢n;Request Body/Query Params;Respuesta (200 OK);C¢digos de Error
+GET /api/services;GET;Lista todos los servicios activos.;Ninguno.;"List<ServiceResponseDTO> { ""id"": long, ""name"": string, ""description"": string, ""price"": double, ... }";401 (no autenticado)
+GET /api/services/{id};GET;Obtiene un servicio por ID.;Path: {id} (long).;ServiceResponseDTO.;401, 404 (no encontrado)
+POST /api/admin/services;POST;Crea un nuevo servicio (solo admin).;"Body: ServiceDTO { ""name"": string (£nico), ""description"": string, ""price"": double, ... }";ServiceResponseDTO creado.;401, 403 (no admin), 400 (nombre duplicado)
+PUT /api/admin/services/{id};PUT;Actualiza un servicio (solo admin).;Path: {id}, Body: ServiceDTO.;ServiceResponseDTO actualizado.;401, 403, 404, 400 (nombre duplicado)
+PUT /api/admin/services/{id}/deactivate;PUT;Desactiva un servicio (soft-delete, solo admin).;Path: {id}.;204 No Content.;401, 403, 404
+DELETE /api/admin/services/{id};DELETE;Elimina un servicio (solo admin).;Path: {id}.;204 No Content.;401, 403, 404
+;;;;;
+Notas: Servicios son p£blicos para listar (autenticados ven cat logo para agendar citas). Admin maneja CRUD.;;;;;
+;;;;;
+3. Endpoints de Mascotas (/api/pets);;;;;
+"Gesti¢n de mascotas. Requiere auth; permisos por rol en servicio.";;;;;
+Endpoint;M‚todo;Descripci¢n;Request Body/Query Params;Respuesta (200 OK);C¢digos de Error
+POST /api/pets;POST;"Crea una mascota (due¤os: para s¡; empleados/admins: para cualquier ownerId).";"Body: PetDTO { ""name"": string (req), ""species"": string (req), ""breed"": string (req), ""age"": int (>0), ""weight"": double (>0), ""sex"": string (req), ""ownerId"": long (opcional para due¤os) }";"PetResponseDTO { ""id"": long, ""name"": string, ""owner"": UserResponseDTO, ""active"": boolean, ... }";401, 403 (no autorizado, e.g., due¤os solo propias), 400 (validaciones)
+PUT /api/pets/{id};PUT;"Actualiza una mascota (due¤os: propias; empleados/admins: cualquier; vets: solo ver).";Path: {id}, Body: PetDTO (sin ownerId).;PetResponseDTO actualizado.;401, 403, 404
+DELETE /api/pets/{id};DELETE;"Elimina una mascota (due¤os: propias; admins: cualquier).";Path: {id}.;204 No Content.;401, 403, 404
+GET /api/pets/{id};GET;"Obtiene una mascota por ID (due¤os: propias; empleados/vets/admins: cualquier).";Path: {id}.;PetResponseDTO.;401, 403, 404
+GET /api/pets;GET;"Lista mascotas (due¤os: propias; empleados/vets/admins: todas).";Ninguno.;List<PetResponseDTO>.;401, 403
+;;;;;
+;;;;;
+Notas: No hay desactivaci¢n (solo delete hard). PetResponseDTO incluye owner como UserResponseDTO (sin password).;;;;;
+4. Endpoints de Citas (/api/appointments);;;;;
+"Gesti¢n de citas. Requiere auth; permisos por rol (due¤os: propias; empleados/admins: todas; vets: asignadas).";;;;;
+Endpoint;M‚todo;Descripci¢n;Request Body/Query Params;Respuesta (200 OK);C¢digos de Error
+POST /api/appointments;POST;"Crea una cita (due¤os: para sus mascotas; empleados/admins: cualquier). assignedTo debe ser EMPLOYEE/VETERINARIAN.";"Body: AppointmentDTO { ""petId"": long (req), ""serviceId"": long (req), ""assignedToId"": long (req, EMPLOYEE/VET), ""startDateTime"": LocalDateTime (futuro, req), ""note"": string (?500, opcional) }";"AppointmentResponseDTO { ""id"": long, ""pet"": PetResponseDTO, ""service"": ServiceResponseDTO, ""owner"": UserResponseDTO, ""assignedTo"": UserResponseDTO, ""status"": ""PENDING"", ... }";401, 403 (no autorizado, e.g., due¤os solo propias), 400 (validaciones, e.g., assignedTo inv lido), 404 (pet/service/user no encontrado)
+PUT /api/appointments/{id};PUT;"Actualiza una cita (empleados/admins: cualquier; due¤os: propias).";Path: {id}, Body: AppointmentDTO.;AppointmentResponseDTO actualizado.;401, 403, 404, 400
+PUT /api/appointments/{id}/cancel;PUT;"Cancela una cita (solo si PENDING; due¤os: propias; empleados/admins: cualquier).";Path: {id}.;204 No Content.;401, 403, 404, 400 (no PENDING)
+PUT /api/appointments/{id}/status;PUT;"Cambia estado (PENDING ? ACCEPTED/CANCELLED; ACCEPTED ? COMPLETED/CANCELLED). Solo asignado (EMPLOYEE/VET) o admin.";"Path: {id}, Body: ChangeAppointmentStatusDTO { ""status"": ""ACCEPTED"" | ""COMPLETED"" | ""CANCELLED"" (req) }";204 No Content.;401, 403 (no asignado), 404, 400 (transici¢n inv lida)
+GET /api/appointments/{id};GET;"Obtiene una cita por ID (due¤os: propias; vets: asignadas; empleados/admins: cualquier).";Path: {id}.;AppointmentResponseDTO.;401, 403, 404
+GET /api/appointments;GET;"Lista citas (due¤os: propias; vets/empleados: asignadas; admins: todas).";Ninguno.;List<AppointmentResponseDTO>.;401, 403
+GET /api/appointments/admin;GET;Lista citas con filtros (solo admins).;Query: ownerId=long (opc), petId=long (opc), serviceId=long (opc), assignedToId=long (opc), startDate=string (ISO, opc), endDate=string (ISO, opc).;List<AppointmentResponseDTO>.;401, 403 (no admin), 400 (fechas inv lidas)
+;;;;;
+;;;;;

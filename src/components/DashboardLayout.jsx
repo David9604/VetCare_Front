@@ -1,0 +1,122 @@
+import React from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import logo from '../assets/icon_dog.svg';
+
+const DashboardLayout = ({ children, navigation }) => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const isActive = (path) => location.pathname === path;
+
+  const defaultNavigationByRole = React.useMemo(() => ({
+    DUENO: [
+      { path: '/owner/dashboard', icon: 'dashboard', label: 'Dashboard' },
+      { path: '/owner/pets', icon: 'pets', label: 'Mis Mascotas' },
+      { path: '/owner/appointments', icon: 'event', label: 'Mis Citas' },
+      { path: '/owner/history', icon: 'history', label: 'Historial Médico' },
+    ],
+    EMPLEADO: [
+      { path: '/employee/dashboard', icon: 'dashboard', label: 'Dashboard' },
+      { path: '/employee/pets', icon: 'pets', label: 'Mascotas' },
+      { path: '/employee/appointments', icon: 'event', label: 'Citas' },
+    ],
+    VETERINARIO: [
+      { path: '/veterinarian/dashboard', icon: 'dashboard', label: 'Dashboard' },
+      { path: '/veterinarian/appointments', icon: 'event', label: 'Citas' },
+      { path: '/veterinarian/diagnoses', icon: 'medical_services', label: 'Diagnósticos' },
+    ],
+    ADMINISTRADOR: [
+      { path: '/admin/dashboard', icon: 'dashboard', label: 'Dashboard' },
+      { path: '/admin/users', icon: 'groups', label: 'Usuarios' },
+      { path: '/admin/services', icon: 'build', label: 'Servicios' },
+      { path: '/admin/appointments', icon: 'event', label: 'Citas' },
+    ],
+  }), []);
+
+  const resolvedNavigation = Array.isArray(navigation) && navigation.length
+    ? navigation
+    : defaultNavigationByRole[user?.role] || [];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Top Navbar */}
+      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              >
+                <span className="material-icons">menu</span>
+              </button>
+              <Link to="/" className="flex items-center gap-2 ml-2 md:ml-0">
+                <img src={logo} alt="VetCare" className="w-8 h-8" />
+                <span className="text-xl font-bold text-gray-800">VetCare</span>
+              </Link>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-medium text-gray-800">{user?.name}</p>
+                <p className="text-xs text-gray-500 capitalize">{user?.role?.toLowerCase()}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <span className="material-icons text-xl">logout</span>
+                <span className="hidden sm:inline">Cerrar Sesión</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:sticky top-16 left-0 z-30 w-64 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out overflow-y-auto`}>
+          <nav className="p-4 space-y-1">
+            {resolvedNavigation.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  isActive(item.path)
+                    ? 'bg-teal text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <span className="material-icons text-xl">{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
+          {children}
+        </main>
+      </div>
+
+      {/* Overlay para cerrar sidebar en móvil */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default DashboardLayout;

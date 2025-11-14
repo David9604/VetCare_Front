@@ -1,50 +1,53 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import '../styles/home.css';
-import M from 'materialize-css';
 import Footer from '../components/footer';
-import ServiceCard from '../components/ServiceCard'; // agregado
-import TestimonialCard from '../components/TestimonialCard'; // agregado
+import ServiceCard from '../components/ServiceCard';
+import TestimonialCard from '../components/TestimonialCard';
 
 const Home = () => {
-  useEffect(() => {
-    
-    M.AutoInit();
-  }, []);
-
   return (
-    <div className="home-container">
-      {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-overlay valign-wrapper">
-          <div className="container center-align">
-            <h1 className="hero-title white-text">El mejor cuidado para tu mejor amigo</h1>
-            <p className="hero-subtitle white-text flow-text">
-              En VetCare, ofrecemos atención veterinaria excepcional. Gestiona las citas,
-              historial médico y más, todo en un solo lugar.
+    <div className="flex flex-col">
+      {/* Hero */}
+      <section
+        className="relative min-h-[500px] flex items-center justify-center text-center"
+        style={{
+          backgroundImage: "linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url('https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=1600')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
+        <div className="max-w-4xl mx-auto px-6">
+          <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-6">
+            El mejor cuidado para tu mejor amigo
+          </h1>
+            <p className="text-white/90 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-8">
+              En VetCare, ofrecemos atención veterinaria excepcional. Gestiona las citas, historial médico y más, todo en un solo lugar.
             </p>
-            <div className="hero-buttons">
-              <Link to="/registro" className="btn-large waves-effect waves-light teal">
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
+              <Link
+                to="/registro"
+                className="inline-flex items-center justify-center rounded-lg bg-teal px-8 py-3 text-white font-semibold shadow-teal-sm hover:shadow-teal-lg transition-shadow"
+              >
                 Registra tu Mascota
               </Link>
-              <Link to="/login" className="btn-large waves-effect waves-light white teal-text">
+              <Link
+                to="/login"
+                className="inline-flex items-center justify-center rounded-lg bg-white px-8 py-3 text-teal font-semibold shadow-sm hover:shadow-lg transition-shadow"
+              >
                 Iniciar Sesión
               </Link>
             </div>
-          </div>
         </div>
       </section>
 
-      {/* Servicios Section */}
-      <section className="services-section grey lighten-4">
-        <div className="container">
-          <h2 className="section-title center-align grey-text text-darken-3">Nuestros Servicios</h2>
-          <p className="section-subtitle center-align grey-text text-darken-1">
-            Ofrecemos una gama completa de servicios para garantizar la salud y felicidad de tu
-            mascota, con la comodidad de gestionarlo todo online.
+      {/* Servicios */}
+      <section className="bg-gray-50 py-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-4">Nuestros Servicios</h2>
+          <p className="text-center text-gray-600 max-w-3xl mx-auto mb-12 leading-relaxed">
+            Ofrecemos una gama completa de servicios para garantizar la salud y felicidad de tu mascota, con la comodidad de gestionarlo todo online.
           </p>
-          
-          <div className="row">
+          <div className="grid gap-8 md:grid-cols-3">
             <ServiceCard
               icon="date_range"
               title="Gestión de Citas Online"
@@ -64,14 +67,11 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Testimonios Section */}
-      <section className="testimonials-section white">
-        <div className="container">
-          <h2 className="section-title center-align grey-text text-darken-3">
-            Lo que dicen los dueños de mascotas
-          </h2>
-          
-          <div className="row">
+      {/* Testimonios */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">Lo que dicen los dueños de mascotas</h2>
+          <div className="grid gap-8 md:grid-cols-2">
             <TestimonialCard
               avatar="https://i.pravatar.cc/150?img=5"
               name="Ana García"
@@ -79,7 +79,6 @@ const Home = () => {
               pet="dueña de Rocky"
               role="Cliente de VetCare"
             />
-
             <TestimonialCard
               avatar="https://i.pravatar.cc/150?img=12"
               name="Javier Martínez"

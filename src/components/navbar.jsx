@@ -1,75 +1,101 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import M from 'materialize-css';
-import '../styles/navbar.css';
 import logo from '../assets/icon_dog.svg';
 
+const navLinks = [
+  { to: '/servicios', label: 'Servicios' },
+  { to: '/nuestro-equipo', label: 'Nuestro Equipo' },
+  { to: '/contacto', label: 'Contacto' },
+];
+
 const Navbar = () => {
-  useEffect(() => {
-    // Inicializar el menú mobile (sidenav)
-    const sidenav = document.querySelectorAll('.sidenav');
-    M.Sidenav.init(sidenav);
-  }, []);
-
+  const [open, setOpen] = useState(false);
   return (
-    <>
-      {/* Navbar Desktop */}
-      <nav className="white navbar-custom">
-        <div className="nav-wrapper">
-          <div className="navbar-container">
-            {/* Logo */}
-            <Link to="/" className="brand-logo left">
-              <img src={logo} alt="VetCare Logo" className="navbar-logo" />
-              <span className="navbar-title grey-text text-darken-3">VetCare</span>
-            </Link>
+    <header className="sticky top-0 z-50 bg-white shadow">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6">
+        {/* Brand */}
+        <Link to="/" className="flex items-center gap-2 group">
+          <img src={logo} alt="VetCare Logo" className="w-8 h-8" />
+          <span className="text-xl font-bold tracking-tight text-gray-800 group-hover:opacity-80">
+            VetCare
+          </span>
+        </Link>
 
-            {/* Menú hamburguesa para mobile */}
-            <a href="#!" data-target="mobile-nav" className="sidenav-trigger right">
-              <i className="material-icons grey-text text-darken-3">menu</i>
-            </a>
+        {/* Desktop menu */}
+        <ul className="hidden md:flex items-center gap-8">
+          {navLinks.map(l => (
+            <li key={l.to}>
+              <Link
+                to={l.to}
+                className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                {l.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
 
-            {/* Menú central - Desktop */}
-            <ul className="center hide-on-med-and-down navbar-menu">
-              <li><Link to="/servicios" className="grey-text text-darken-1">Servicios</Link></li>
-              <li><Link to="/nuestro-equipo" className="grey-text text-darken-1">Nuestro Equipo</Link></li>
-              <li><Link to="/contacto" className="grey-text text-darken-1">Contacto</Link></li>
-            </ul>
-
-            {/* Botones - Desktop */}
-            <ul className="right hide-on-med-and-down navbar-actions">
-              <li>
-                <Link to="/login" className="btn-flat grey-text text-darken-2 waves-effect">
-                  Iniciar Sesión
-                </Link>
-              </li>
-              <li>
-                <Link to="/registro" className="btn waves-effect waves-light teal">
-                  Registrarse
-                </Link>
-              </li>
-            </ul>
-          </div>
+        {/* Desktop actions */}
+        <div className="hidden md:flex items-center gap-3">
+          <Link
+            to="/login"
+            className="text-sm font-semibold text-gray-700 hover:text-gray-900 px-4 py-2"
+          >
+            Iniciar Sesión
+          </Link>
+          <Link
+            to="/registro"
+            className="inline-flex items-center justify-center rounded-lg bg-teal px-5 py-2 text-sm font-semibold text-white shadow-teal-sm hover:shadow-teal-lg transition-shadow"
+          >
+            Registrarse
+          </Link>
         </div>
+
+        {/* Mobile toggle */}
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="md:hidden inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 focus:outline-none"
+          aria-label="Toggle menu"
+        >
+          <span className="material-icons">{open ? 'close' : 'menu'}</span>
+        </button>
       </nav>
 
-      {/* Menú Mobile (Sidenav) */}
-      <ul className="sidenav" id="mobile-nav">
-        <li>
-          <div className="user-view teal lighten-5">
-            <div className="center-align" style={{ padding: '20px' }}>
-              <img src={logo} alt="VetCare Logo" style={{ width: '60px', height: '60px' }} />
-              <h5 className="grey-text text-darken-3">VetCare</h5>
-            </div>
-          </div>
-        </li>
-        <li><Link to="/servicios" className="waves-effect">Servicios</Link></li>
-        <li><Link to="/nuestro-equipo" className="waves-effect">Nuestro Equipo</Link></li>
-        <li><Link to="/contacto" className="waves-effect">Contacto</Link></li>
-        <li><div className="divider"></div></li>
-        <li><Link to="/login" className="waves-effect">Iniciar Sesión</Link></li>
-        <li><Link to="/registro" className="waves-effect teal-text">Registrarse</Link></li>
-      </ul>
-    </>
+      {/* Mobile menu panel */}
+      {open && (
+        <div className="md:hidden border-t border-gray-200 bg-white shadow-sm">
+          <ul className="px-4 py-4 space-y-2">
+            {navLinks.map(l => (
+              <li key={l.to}>
+                <Link
+                  to={l.to}
+                  onClick={() => setOpen(false)}
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+            <li className="pt-2 border-t border-gray-100 flex flex-col gap-2">
+              <Link
+                to="/login"
+                onClick={() => setOpen(false)}
+                className="block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Iniciar Sesión
+              </Link>
+              <Link
+                to="/registro"
+                onClick={() => setOpen(false)}
+                className="block rounded-md bg-teal px-3 py-2 text-sm font-semibold text-white text-center shadow-teal-sm hover:shadow-teal-lg"
+              >
+                Registrarse
+              </Link>
+            </li>
+          </ul>
+        </div>
+      )}
+    </header>
   );
 };
 

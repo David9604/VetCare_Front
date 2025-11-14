@@ -1,252 +1,128 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import '../styles/ResetPassword.css';
 import logo from '../assets/icon_dog.svg';
-import M from 'materialize-css';
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [formData, setFormData] = useState({
-    password: '',
-    confirmPassword: ''
-  });
+  const [formData, setFormData] = useState({ password: '', confirmPassword: '' });
   const [errors, setErrors] = useState({});
-  const navigate = useNavigate();
-
-  // Obtener el token del URL (ej: /restablecer-password?token=abc123)
-  const token = searchParams.get('token');
-
-  useEffect(() => {
-    // Validar que el token existe
-    if (!token) {
-      M.toast({
-        html: 'Token inválido o expirado',
-        classes: 'red rounded',
-        displayLength: 4000
-      });
-      // Opcional: redirigir a recuperar password
-      // navigate('/recuperar-password');
-    }
-  }, [token, navigate]);
+  const [feedback, setFeedback] = useState(token ? null : { type: 'error', message: 'Token inválido o expirado.' });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-    // Limpiar error del campo cuando el usuario escribe
-    if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: ''
-      });
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
-  const validatePassword = () => {
+  const validate = () => {
     const newErrors = {};
-
-    // Validar longitud mínima
-    if (formData.password.length < 8) {
-      newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
-    }
-
-    // Validar que contenga al menos una letra mayúscula
-    if (!/[A-Z]/.test(formData.password)) {
-      newErrors.password = 'Debe contener al menos una letra mayúscula';
-    }
-
-    // Validar que contenga al menos un número
-    if (!/[0-9]/.test(formData.password)) {
-      newErrors.password = 'Debe contener al menos un número';
-    }
-
-    // Validar que las contraseñas coincidan
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Las contraseñas no coinciden';
-    }
-
+    if (formData.password.length < 8) newErrors.password = 'Al menos 8 caracteres';
+    else if (!/[A-Z]/.test(formData.password)) newErrors.password = 'Falta una mayúscula';
+    else if (!/[0-9]/.test(formData.password)) newErrors.password = 'Falta un número';
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'No coinciden';
     return newErrors;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Validar contraseñas
-    const validationErrors = validatePassword();
-    
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      M.toast({
-        html: 'Por favor corrige los errores en el formulario',
-        classes: 'red rounded',
-        displayLength: 3000
-      });
+    const v = validate();
+    if (Object.keys(v).length) {
+      setErrors(v);
+      setFeedback({ type: 'error', message: 'Corrige los errores e intenta nuevamente.' });
       return;
     }
-
-    // Aquí irá la lógica para enviar al backend
-    console.log('Nueva contraseña:', formData.password);
-    console.log('Token:', token);
-
-    // Simular éxito
+    console.log('Nueva contraseña:', formData.password, 'Token:', token);
     setIsSuccess(true);
-    
-    M.toast({
-      html: '¡Contraseña actualizada exitosamente!',
-      classes: 'teal rounded',
-      displayLength: 4000
-    });
-
-    // Redirigir al login después de 3 segundos
-    setTimeout(() => navigate('/login'), 3000);
-  };
-
-  const togglePasswordVisibility = (field) => {
-    if (field === 'password') {
-      setShowPassword(!showPassword);
-    } else {
-      setShowConfirmPassword(!showConfirmPassword);
-    }
+    setFeedback({ type: 'success', message: '¡Contraseña actualizada! Redirigiendo...' });
+    setTimeout(() => navigate('/login'), 2500);
   };
 
   return (
-    <div className="reset-container">
-      <div className="reset-card card">
-        <div className="card-content">
-          {/* Logo y título */}
-          <div className="reset-header center-align">
-            <div className="logo-container">
-              <img src={logo} alt="VetCare Logo" className="reset-logo" />
-            </div>
-            <h4 className="grey-text text-darken-3">VetCare</h4>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-10">
+      <div className="w-full max-w-lg bg-white rounded-lg shadow-sm p-8">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-20 h-20 rounded-full bg-teal-light flex items-center justify-center mb-4">
+            <img src={logo} alt="VetCare Logo" className="w-12 h-12" />
           </div>
-
-          {!isSuccess ? (
-            <>
-              {/* Título */}
-              <div className="reset-welcome center-align">
-                <h5 className="grey-text text-darken-3">Restablecer Contraseña</h5>
-                <p className="grey-text">
-                  Ingresa tu nueva contraseña. Asegúrate de que sea segura y fácil de recordar.
-                </p>
-              </div>
-
-              {/* Formulario */}
-              <form onSubmit={handleSubmit}>
-                {/* Campo de nueva contraseña */}
-                <div className="input-field password-field">
+          <h4 className="text-2xl font-bold text-gray-800">VetCare</h4>
+        </div>
+        {!isSuccess ? (
+          <>
+            <div className="text-center mb-8">
+              <h5 className="text-xl font-semibold text-gray-800 mb-3">Restablecer Contraseña</h5>
+              <p className="text-gray-600 text-sm leading-relaxed">Ingresa tu nueva contraseña y asegúrate de que cumpla los requisitos.</p>
+            </div>
+            {feedback && (
+              <div className={`mb-6 text-sm rounded-md px-4 py-3 ${feedback.type === 'success' ? 'bg-teal/10 text-teal' : 'bg-red-100 text-red-600'}`}>{feedback.message}</div>
+            )}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="password" className="text-sm font-medium text-gray-700">Nueva Contraseña</label>
+                <div className="relative">
                   <input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
                     name="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={handleInputChange}
                     required
-                    className={errors.password ? 'invalid' : ''}
+                    className={`w-full rounded-md border px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-teal ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+                    placeholder="••••••••"
                   />
-                  <label htmlFor="password">Nueva Contraseña</label>
-                  <i 
-                    className="material-icons password-toggle" 
-                    onClick={() => togglePasswordVisibility('password')}
-                  >
-                    {showPassword ? 'visibility_off' : 'visibility'}
-                  </i>
-                  {errors.password && (
-                    <span className="helper-text red-text">{errors.password}</span>
-                  )}
+                  <button type="button" onClick={() => setShowPassword(p => !p)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-teal" aria-label="Mostrar u ocultar contraseña">
+                    <span className="material-icons text-xl">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                  </button>
                 </div>
-
-                {/* Campo de confirmar contraseña */}
-                <div className="input-field password-field">
+                {errors.password && <span className="text-xs text-red-600">{errors.password}</span>}
+                <ul className="mt-2 space-y-1 text-xs text-gray-500">
+                  <li className={`${formData.password.length >= 8 ? 'text-teal' : ''}`}>• Mínimo 8 caracteres</li>
+                  <li className={`${/[A-Z]/.test(formData.password) ? 'text-teal' : ''}`}>• Una letra mayúscula</li>
+                  <li className={`${/[0-9]/.test(formData.password) ? 'text-teal' : ''}`}>• Un número</li>
+                </ul>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirmar Contraseña</label>
+                <div className="relative">
                   <input
                     id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
                     name="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required
-                    className={errors.confirmPassword ? 'invalid' : ''}
+                    className={`w-full rounded-md border px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-teal ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
+                    placeholder="Repite la contraseña"
                   />
-                  <label htmlFor="confirmPassword">Confirmar Contraseña</label>
-                  <i 
-                    className="material-icons password-toggle" 
-                    onClick={() => togglePasswordVisibility('confirmPassword')}
-                  >
-                    {showConfirmPassword ? 'visibility_off' : 'visibility'}
-                  </i>
-                  {errors.confirmPassword && (
-                    <span className="helper-text red-text">{errors.confirmPassword}</span>
-                  )}
+                  <button type="button" onClick={() => setShowConfirmPassword(p => !p)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-teal" aria-label="Mostrar u ocultar confirmación">
+                    <span className="material-icons text-xl">{showConfirmPassword ? 'visibility_off' : 'visibility'}</span>
+                  </button>
                 </div>
-
-                {/* Requisitos de contraseña */}
-                <div className="password-requirements">
-                  <p className="grey-text text-darken-1">
-                    <small>
-                      <strong>Requisitos de la contraseña:</strong>
-                    </small>
-                  </p>
-                  <ul className="grey-text">
-                    <li className={formData.password.length >= 8 ? 'teal-text' : ''}>
-                      <small>• Mínimo 8 caracteres</small>
-                    </li>
-                    <li className={/[A-Z]/.test(formData.password) ? 'teal-text' : ''}>
-                      <small>• Al menos una letra mayúscula</small>
-                    </li>
-                    <li className={/[0-9]/.test(formData.password) ? 'teal-text' : ''}>
-                      <small>• Al menos un número</small>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Botón de restablecer */}
-                <button 
-                  type="submit" 
-                  className="btn waves-effect waves-light teal btn-large btn-block"
-                >
-                  Cambiar Contraseña
-                </button>
-              </form>
-            </>
-          ) : (
-            <>
-              {/* Mensaje de éxito */}
-              <div className="reset-success center-align">
-                <i className="material-icons large teal-text">check_circle</i>
-                <h5 className="grey-text text-darken-3">¡Contraseña Actualizada!</h5>
-                <p className="grey-text">
-                  Tu contraseña ha sido restablecida exitosamente. 
-                  Serás redirigido al inicio de sesión en unos segundos.
-                </p>
+                {errors.confirmPassword && <span className="text-xs text-red-600">{errors.confirmPassword}</span>}
               </div>
-
-              {/* Botón para ir al login */}
-              <Link 
-                to="/login" 
-                className="btn waves-effect waves-light teal btn-large btn-block"
-              >
-                Ir al Inicio de Sesión
-              </Link>
-            </>
-          )}
-
-          {/* Enlace a login */}
-          {!isSuccess && (
-            <div className="reset-footer center-align">
-              <p className="grey-text">
-                ¿Recordaste tu contraseña?{' '}
-                <Link to="/login" className="teal-text">
-                  <strong>Iniciar Sesión</strong>
-                </Link>
-              </p>
+              <button type="submit" className="w-full rounded-lg bg-teal h-12 text-white font-semibold text-sm shadow-teal-sm hover:shadow-teal-lg transition-shadow">Cambiar Contraseña</button>
+              <div className="text-center pt-2">
+                <p className="text-xs text-gray-500">Token: {token || 'No proporcionado'}</p>
+              </div>
+            </form>
+            <div className="text-center mt-8 pt-6 border-t border-gray-200">
+              <p className="text-sm text-gray-600">¿Recordaste tu contraseña?{' '}<Link to="/login" className="text-teal font-semibold hover:underline">Iniciar Sesión</Link></p>
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <>
+            <div className="text-center mb-8">
+              <span className="material-icons text-teal text-6xl mb-4">check_circle</span>
+              <h5 className="text-xl font-semibold text-gray-800 mb-3">¡Contraseña Actualizada!</h5>
+              <p className="text-gray-600 text-sm leading-relaxed">Serás redirigido al inicio de sesión en unos segundos.</p>
+            </div>
+            <Link to="/login" className="w-full block text-center rounded-lg bg-teal h-12 text-white font-semibold text-sm shadow-teal-sm hover:shadow-teal-lg transition-shadow">Ir al Inicio de Sesión</Link>
+          </>
+        )}
       </div>
     </div>
   );
