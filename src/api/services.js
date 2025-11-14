@@ -1,9 +1,20 @@
 import axiosInstance from './axios';
 
 export const authApi = {
-  login: (credentials) => axiosInstance.post('/auth/login', credentials),
+  login: (credentials) => {
+    console.log('authApi.login - Sending credentials:', credentials);
+    // Spring Security formLogin espera application/x-www-form-urlencoded
+    const formData = new URLSearchParams();
+    formData.append('email', credentials.email);
+    formData.append('password', credentials.password);
+    console.log('authApi.login - Form data:', formData.toString());
+    return axiosInstance.post('/auth/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+  },
   register: (userData) => axiosInstance.post('/users/register', userData),
-  getProfile: () => axiosInstance.get('/auth/login'), // GET /api/auth/login obtiene usuario actual
   getCurrentUser: () => axiosInstance.get('/users/me'),
   logout: () => axiosInstance.post('/auth/logout'),
   updateProfile: (id, data) => axiosInstance.put(`/users/${id}`, data),

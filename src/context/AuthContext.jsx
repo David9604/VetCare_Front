@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
       if (savedUser) {
         try {
           // Verificar si la cookie sigue válida
-          const userResponse = await authApi.getProfile();
+          const userResponse = await authApi.getCurrentUser();
           setUser(userResponse.data);
         } catch (error) {
           // Cookie expirada o inválida, limpiar datos
@@ -52,8 +52,8 @@ export const AuthProvider = ({ children }) => {
       // Con cookies, el login solo confirma las credenciales
       // La cookie se guarda automáticamente por el navegador
       
-      // Obtener datos del usuario con GET /api/auth/login
-      const userResponse = await authApi.getProfile();
+      // Obtener datos del usuario con GET /api/users/me
+      const userResponse = await authApi.getCurrentUser();
       console.log('User profile response:', userResponse.data);
       
       // Solo guardamos los datos del usuario, no tokens

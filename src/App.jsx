@@ -39,7 +39,7 @@ function App() {
           <Route
             path="/owner/dashboard"
             element={
-              <ProtectedRoute allowedRoles={['DUENO']}>
+              <ProtectedRoute allowedRoles={['OWNER']}>
                 <OwnerDashboard />
               </ProtectedRoute>
             }
@@ -47,7 +47,7 @@ function App() {
           <Route
             path="/owner/pets"
             element={
-              <ProtectedRoute allowedRoles={['DUENO']}>
+              <ProtectedRoute allowedRoles={['OWNER']}>
                 <OwnerPets />
               </ProtectedRoute>
             }
@@ -55,7 +55,7 @@ function App() {
           <Route
             path="/owner/appointments"
             element={
-              <ProtectedRoute allowedRoles={['DUENO']}>
+              <ProtectedRoute allowedRoles={['OWNER']}>
                 <OwnerAppointments />
               </ProtectedRoute>
             }
@@ -63,7 +63,7 @@ function App() {
           <Route
             path="/owner/history"
             element={
-              <ProtectedRoute allowedRoles={['DUENO']}>
+              <ProtectedRoute allowedRoles={['OWNER']}>
                 <OwnerHistory />
               </ProtectedRoute>
             }
@@ -73,7 +73,7 @@ function App() {
           <Route
             path="/employee/dashboard"
             element={
-              <ProtectedRoute allowedRoles={['EMPLEADO']}>
+              <ProtectedRoute allowedRoles={['EMPLOYEE']}>
                 <EmployeeDashboard />
               </ProtectedRoute>
             }
@@ -81,7 +81,7 @@ function App() {
           <Route
             path="/employee/pets"
             element={
-              <ProtectedRoute allowedRoles={['EMPLEADO']}>
+              <ProtectedRoute allowedRoles={['EMPLOYEE']}>
                 <EmployeePets />
               </ProtectedRoute>
             }
@@ -89,7 +89,7 @@ function App() {
           <Route
             path="/employee/appointments"
             element={
-              <ProtectedRoute allowedRoles={['EMPLEADO']}>
+              <ProtectedRoute allowedRoles={['EMPLOYEE']}>
                 <EmployeeAppointments />
               </ProtectedRoute>
             }
@@ -99,7 +99,7 @@ function App() {
           <Route
             path="/veterinarian/dashboard"
             element={
-              <ProtectedRoute allowedRoles={['VETERINARIO']}>
+              <ProtectedRoute allowedRoles={['VETERINARIAN']}>
                 <VeterinarianDashboard />
               </ProtectedRoute>
             }
@@ -107,7 +107,7 @@ function App() {
           <Route
             path="/veterinarian/appointments"
             element={
-              <ProtectedRoute allowedRoles={['VETERINARIO']}>
+              <ProtectedRoute allowedRoles={['VETERINARIAN']}>
                 <VeterinarianAppointments />
               </ProtectedRoute>
             }
@@ -115,7 +115,7 @@ function App() {
           <Route
             path="/veterinarian/diagnoses"
             element={
-              <ProtectedRoute allowedRoles={['VETERINARIO']}>
+              <ProtectedRoute allowedRoles={['VETERINARIAN']}>
                 <VeterinarianDiagnosis />
               </ProtectedRoute>
             }
@@ -126,7 +126,7 @@ function App() {
           <Route
             path="/admin/dashboard"
             element={
-              <ProtectedRoute allowedRoles={['ADMINISTRADOR']}>
+              <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AdminDashboard />
               </ProtectedRoute>
             }
@@ -134,7 +134,7 @@ function App() {
           <Route
             path="/admin/users"
             element={
-              <ProtectedRoute allowedRoles={['ADMINISTRADOR']}>
+              <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AdminUsers />
               </ProtectedRoute>
             }
@@ -142,7 +142,7 @@ function App() {
           <Route
             path="/admin/services"
             element={
-              <ProtectedRoute allowedRoles={['ADMINISTRADOR']}>
+              <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AdminServices />
               </ProtectedRoute>
             }
@@ -150,7 +150,7 @@ function App() {
           <Route
             path="/admin/appointments"
             element={
-              <ProtectedRoute allowedRoles={['ADMINISTRADOR']}>
+              <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AdminAppointments />
               </ProtectedRoute>
             }

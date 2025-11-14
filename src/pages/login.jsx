@@ -21,26 +21,35 @@ const Login = () => {
     setLoading(true);
     setFeedback(null);
     try {
-      await login(formData.email, formData.password);
-      // Navigate based on user role (handled in AuthContext)
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (user) {
+      const user = await login(formData.email, formData.password);
+      console.log('User data received:', user);
+      console.log('User role:', user?.role);
+      // Navigate based on user role
+      if (user && user.role) {
         switch (user.role) {
-          case 'DUENO':
+          case 'OWNER':
+            console.log('Redirecting to /owner/dashboard');
             navigate('/owner/dashboard');
             break;
-          case 'EMPLEADO':
+          case 'EMPLOYEE':
+            console.log('Redirecting to /employee/dashboard');
             navigate('/employee/dashboard');
             break;
-          case 'VETERINARIO':
+          case 'VETERINARIAN':
+            console.log('Redirecting to /veterinarian/dashboard');
             navigate('/veterinarian/dashboard');
             break;
-          case 'ADMINISTRADOR':
+          case 'ADMIN':
+            console.log('Redirecting to /admin/dashboard');
             navigate('/admin/dashboard');
             break;
           default:
+            console.log('No role match, redirecting to home. Role was:', user.role);
             navigate('/');
         }
+      } else {
+        console.log('No user or no role, redirecting to home');
+        navigate('/');
       }
     } catch (error) {
       console.error('Login error:', error);
