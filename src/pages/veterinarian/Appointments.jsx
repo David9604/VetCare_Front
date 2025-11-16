@@ -14,6 +14,13 @@ const VeterinarianAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [diagnosisData, setDiagnosisData] = useState({ observations: '', treatment: '', medications: '' });
 
+  const normalizeStatus = (s) => ({
+    PENDIENTE: 'PENDING',
+    CONFIRMADA: 'ACCEPTED',
+    COMPLETADA: 'COMPLETED',
+    CANCELADA: 'CANCELLED',
+  }[s] || s);
+
   const navigation = [
     { path: '/veterinarian/dashboard', icon: 'dashboard', label: 'Dashboard' },
     { path: '/veterinarian/appointments', icon: 'event', label: 'Citas' },
@@ -50,6 +57,17 @@ const VeterinarianAppointments = () => {
 
   const completeAppointment = async (appointmentId) => {
     try {
+      const ap = appointments.find(a => a.id === appointmentId);
+      const currentStatus = normalizeStatus(ap?.status);
+
+      if (currentStatus === 'PENDING') {
+        if (appointmentApi.confirm) {
+          await appointmentApi.confirm(appointmentId);
+        } else {
+          await appointmentApi.updateStatus(appointmentId, 'ACCEPTED');
+        }
+      }
+
       if (appointmentApi.complete) {
         await appointmentApi.complete(appointmentId);
       } else {
@@ -58,7 +76,7 @@ const VeterinarianAppointments = () => {
       setFeedback({ type: 'success', message: 'Cita marcada como completada' });
       load();
     } catch (e) {
-      setFeedback({ type: 'error', message: 'No se pudo completar la cita' });
+      setFeedback({ type: 'error', message: e.response?.data?.message || 'No se pudo completar la cita' });
     }
   };
 
@@ -74,6 +92,14 @@ const VeterinarianAppointments = () => {
     try {
       // Los diagnósticos no están implementados en el backend actual
       // Solo marcar cita como completada
+      const currentStatus = normalizeStatus(selectedAppointment.status);
+      if (currentStatus === 'PENDING') {
+        if (appointmentApi.confirm) {
+          await appointmentApi.confirm(selectedAppointment.id);
+        } else {
+          await appointmentApi.updateStatus(selectedAppointment.id, 'ACCEPTED');
+        }
+      }
       if (appointmentApi.complete) {
         await appointmentApi.complete(selectedAppointment.id);
       } else {

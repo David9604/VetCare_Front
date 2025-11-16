@@ -32,21 +32,19 @@ const EmployeeAppointments = () => {
   const load = async () => {
     setLoading(true);
     try {
-      // Intentar primero con el endpoint de empleado
-      let apptRes = await appointmentApi.getAll();
-      console.log('Citas desde /appointments:', apptRes.data);
-      
-      // Si está vacío, intentar con getAllAdmin para ver todas las citas
-      if (!apptRes.data || apptRes.data.length === 0) {
-        try {
-          apptRes = await appointmentApi.getAllAdmin();
-          console.log('Citas desde /appointments/admin:', apptRes.data);
-        } catch (adminError) {
-          console.log('No hay acceso a /appointments/admin, mostrando citas asignadas solamente');
-        }
+      // Para empleados queremos ver todas las citas: intentamos /appointments/admin primero
+      // (el backend permite EMPLOYEE aquí). Si falla (403), caemos a /appointments
+      let apptRes;
+      try {
+        apptRes = await appointmentApi.getAllAdmin();
+        console.log('Citas desde /appointments/admin:', apptRes.data);
+      } catch (adminError) {
+        console.log('Sin acceso a /appointments/admin, usando /appointments');
+        apptRes = await appointmentApi.getAll();
+        console.log('Citas desde /appointments:', apptRes.data);
       }
-      
-      setAppointments(apptRes.data || []);
+
+      setAppointments(apptRes?.data || []);
     } catch (e) {
       console.error('Error al cargar citas:', e);
       setFeedback({ type: 'error', message: 'Error al cargar datos' });
