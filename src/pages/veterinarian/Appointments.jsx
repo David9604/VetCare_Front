@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { appointmentApi } from '../../api/services';
-// import { diagnosisApi } from '../../api/services'; // No disponible en backend actual
+import { appointmentApi, diagnosisApi } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 
 const VeterinarianAppointments = () => {
@@ -14,12 +13,36 @@ const VeterinarianAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [diagnosisData, setDiagnosisData] = useState({ observations: '', treatment: '', medications: '' });
 
-  const normalizeStatus = (s) => ({
-    PENDIENTE: 'PENDING',
-    CONFIRMADA: 'ACCEPTED',
-    COMPLETADA: 'COMPLETED',
-    CANCELADA: 'CANCELLED',
-  }[s] || s);
+  const normalizeStatus = (s) => {
+    if (!s) return '';
+    const map = {
+      PENDIENTE: 'PENDING',
+      PENDING: 'PENDING',
+      CONFIRMADA: 'ACCEPTED',
+      ACCEPTED: 'ACCEPTED',
+      COMPLETADA: 'COMPLETED',
+      COMPLETED: 'COMPLETED',
+      CANCELADA: 'CANCELLED',
+      CANCELLED: 'CANCELLED',
+    };
+    const normalized = map[s.toUpperCase()];
+    return normalized || s.toUpperCase();
+  };
+
+  const STATUS_CONFIG = {
+    PENDING: { label: 'Pendiente', badge: 'bg-yellow-100 text-yellow-800' },
+    ACCEPTED: { label: 'Confirmada', badge: 'bg-blue-100 text-blue-800' },
+    COMPLETED: { label: 'Completada', badge: 'bg-green-100 text-green-800' },
+    CANCELLED: { label: 'Cancelada', badge: 'bg-red-100 text-red-800' },
+  };
+
+  const statusOptions = [
+    { value: 'ALL', label: 'Todos' },
+    { value: 'PENDING', label: 'Pendiente' },
+    { value: 'ACCEPTED', label: 'Confirmada' },
+    { value: 'COMPLETED', label: 'Completada' },
+    { value: 'CANCELLED', label: 'Cancelada' },
+  ];
 
   const navigation = [
     { path: '/veterinarian/dashboard', icon: 'dashboard', label: 'Dashboard' },
@@ -31,12 +54,52 @@ const VeterinarianAppointments = () => {
     load();
   }, []);
 
+  const parseDiagnosisFromNote = (note) => {
+    if (!note) return null;
+    try {
+      const parsed = JSON.parse(note);
+      if (parsed?.type === 'DIAGNOSIS_V1' && parsed.diagnosis) {
+        return parsed.diagnosis;
+      }
+    } catch (e) {
+      // nota no es JSON válido, ignorar
+    }
+    return null;
+  };
+
+  const enrichAppointment = (appointment) => {
+    if (!appointment) return appointment;
+    const diagnosis = appointment.diagnosis || parseDiagnosisFromNote(appointment.note);
+    return diagnosis ? { ...appointment, diagnosis } : appointment;
+  };
+
   const load = async () => {
     setLoading(true);
     try {
-      const res = await appointmentApi.getAll();
-      setAppointments(res.data || []);
+      const [appointmentsRes, diagnosesRes] = await Promise.all([
+        appointmentApi.getAll(),
+        diagnosisApi?.getMine ? diagnosisApi.getMine() : Promise.resolve({ data: [] }),
+      ]);
+
+      const rawAppointments = appointmentsRes.data || [];
+      const appointmentsWithNotes = rawAppointments.map(enrichAppointment);
+
+      const diagnosisByAppointmentId = {};
+      (diagnosesRes?.data || []).forEach((diagnosis) => {
+        const appointmentId = diagnosis.appointment?.id;
+        if (appointmentId) {
+          diagnosisByAppointmentId[appointmentId] = diagnosis;
+        }
+      });
+
+      const merged = appointmentsWithNotes.map((appointment) => {
+        const diagnosis = diagnosisByAppointmentId[appointment.id];
+        return diagnosis ? { ...appointment, diagnosis } : appointment;
+      });
+
+      setAppointments(merged);
     } catch (e) {
+      console.error('Error al cargar citas o diagnósticos:', e);
       setFeedback({ type: 'error', message: 'Error al cargar citas' });
     } finally {
       setLoading(false);
@@ -50,22 +113,48 @@ const VeterinarianAppointments = () => {
 
   const filteredAppointments = useMemo(() => {
     let list = myAppointments;
-    if (filters.status !== 'ALL') list = list.filter(a => a.status === filters.status);
-    if (filters.date) list = list.filter(a => (a.datetime || a.date)?.startsWith(filters.date));
+    if (filters.status !== 'ALL') list = list.filter(a => normalizeStatus(a.status) === filters.status);
+    if (filters.date) list = list.filter(a => (a.startDateTime || a.datetime || a.date || '').startsWith(filters.date));
     return list;
   }, [myAppointments, filters]);
+
+  const appointmentHasDiagnosis = (appointment) => {
+    if (!appointment) return false;
+    if (appointment.diagnosis) return true;
+    if (appointment.diagnosisId) return true;
+    if (Array.isArray(appointment.diagnoses) && appointment.diagnoses.length > 0) return true;
+    if (parseDiagnosisFromNote(appointment.note)) return true;
+    return false;
+  };
+
+  const assignedToVeterinarian = (appointment) => {
+    if (!appointment) return false;
+    const role = appointment.assignedTo?.role || appointment.assignedToRole || appointment.assignedTo?.roleName;
+    return role === 'VETERINARIAN';
+  };
+
+  const canCompleteWithoutDiagnosis = (appointment) => {
+    if (!appointment) return true;
+    return !assignedToVeterinarian(appointment) || appointmentHasDiagnosis(appointment);
+  };
+
+  const getCurrentLocalDate = () => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffset).toISOString().split('T')[0];
+  };
 
   const completeAppointment = async (appointmentId) => {
     try {
       const ap = appointments.find(a => a.id === appointmentId);
       const currentStatus = normalizeStatus(ap?.status);
-
-      if (currentStatus === 'PENDING') {
-        if (appointmentApi.confirm) {
-          await appointmentApi.confirm(appointmentId);
-        } else {
-          await appointmentApi.updateStatus(appointmentId, 'ACCEPTED');
-        }
+      if (currentStatus !== 'ACCEPTED') {
+        setFeedback({ type: 'error', message: 'Primero debes confirmar la cita antes de completarla' });
+        return;
+      }
+      if (!canCompleteWithoutDiagnosis(ap)) {
+        setFeedback({ type: 'error', message: 'Registra un diagnóstico antes de completar esta cita' });
+        return;
       }
 
       if (appointmentApi.complete) {
@@ -86,31 +175,75 @@ const VeterinarianAppointments = () => {
     setShowDiagnosisModal(true);
   };
 
+  const handleAccept = async (appointmentId) => {
+    try {
+      if (appointmentApi.confirm) {
+        await appointmentApi.confirm(appointmentId);
+      } else {
+        await appointmentApi.updateStatus(appointmentId, 'ACCEPTED');
+      }
+      setFeedback({ type: 'success', message: 'Cita confirmada' });
+      load();
+    } catch (e) {
+      setFeedback({ type: 'error', message: e.response?.data?.message || 'No se pudo confirmar la cita' });
+    }
+  };
+
+  const handleCancel = async (appointmentId) => {
+    if (!confirm('¿Cancelar esta cita?')) return;
+    try {
+      await appointmentApi.cancel(appointmentId);
+      setFeedback({ type: 'success', message: 'Cita cancelada' });
+      load();
+    } catch (e) {
+      setFeedback({ type: 'error', message: e.response?.data?.message || 'No se pudo cancelar' });
+    }
+  };
+
+  const canEditDiagnosis = (appointment) => normalizeStatus(appointment?.status) === 'ACCEPTED';
+
   const submitDiagnosis = async (e) => {
     e.preventDefault();
     if (!selectedAppointment) return;
+    const currentStatus = normalizeStatus(selectedAppointment.status);
+    if (currentStatus !== 'ACCEPTED' && currentStatus !== 'COMPLETED') {
+      setFeedback({ type: 'error', message: 'Solo puedes registrar diagnósticos en citas confirmadas o completadas' });
+      return;
+    }
+
+    const description = diagnosisData.observations.trim();
+    if (!description) {
+      setFeedback({ type: 'error', message: 'Las observaciones son obligatorias' });
+      return;
+    }
+
+    const payload = {
+      appointmentId: selectedAppointment.id,
+      description,
+      treatment: diagnosisData.treatment?.trim() || null,
+      medications: diagnosisData.medications?.trim() || null,
+      date: getCurrentLocalDate(),
+      active: true,
+    };
+
     try {
-      // Los diagnósticos no están implementados en el backend actual
-      // Solo marcar cita como completada
-      const currentStatus = normalizeStatus(selectedAppointment.status);
-      if (currentStatus === 'PENDING') {
-        if (appointmentApi.confirm) {
-          await appointmentApi.confirm(selectedAppointment.id);
+      if (currentStatus !== 'COMPLETED') {
+        if (appointmentApi.complete) {
+          await appointmentApi.complete(selectedAppointment.id);
         } else {
-          await appointmentApi.updateStatus(selectedAppointment.id, 'ACCEPTED');
+          await appointmentApi.updateStatus(selectedAppointment.id, 'COMPLETED');
         }
       }
-      if (appointmentApi.complete) {
-        await appointmentApi.complete(selectedAppointment.id);
-      } else {
-        await appointmentApi.updateStatus(selectedAppointment.id, 'COMPLETED');
-      }
-      setFeedback({ type: 'success', message: 'Cita marcada como completada' });
+
+      await diagnosisApi.create(payload);
+      setFeedback({ type: 'success', message: 'Diagnóstico registrado. Ahora puedes completar la cita.' });
       setShowDiagnosisModal(false);
       setSelectedAppointment(null);
-      load();
-    } catch (e) {
-      setFeedback({ type: 'error', message: e.response?.data?.message || 'Error al completar cita' });
+      setDiagnosisData({ observations: '', treatment: '', medications: '' });
+      await load();
+    } catch (error) {
+      console.error('Error al guardar diagnóstico:', error);
+      setFeedback({ type: 'error', message: error.response?.data?.message || 'No se pudo guardar el diagnóstico' });
     }
   };
 
@@ -133,11 +266,9 @@ const VeterinarianAppointments = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
               <select value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-teal">
-                <option value="ALL">Todos</option>
-                <option value="PENDIENTE">Pendiente</option>
-                <option value="CONFIRMADA">Confirmada</option>
-                <option value="COMPLETADA">Completada</option>
-                <option value="CANCELADA">Cancelada</option>
+                {statusOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -159,12 +290,17 @@ const VeterinarianAppointments = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredAppointments.map(ap => (
+            {filteredAppointments.map(ap => {
+              const normalized = normalizeStatus(ap.status);
+              const disableComplete = normalized === 'COMPLETED' || !canCompleteWithoutDiagnosis(ap);
+              return (
               <div key={ap.id} className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${ap.status === 'PENDIENTE' ? 'bg-yellow-100 text-yellow-800' : ap.status === 'CONFIRMADA' ? 'bg-blue-100 text-blue-800' : ap.status === 'COMPLETADA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{ap.status}</span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_CONFIG[normalized]?.badge || 'bg-gray-100 text-gray-800'}`}>
+                        {STATUS_CONFIG[normalized]?.label || ap.status}
+                      </span>
                       <span className="text-sm text-gray-500">{new Date(ap.startDateTime).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                       <span className="text-sm text-gray-500">{new Date(ap.startDateTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
@@ -172,17 +308,53 @@ const VeterinarianAppointments = () => {
                     <p className="text-sm text-gray-600">Dueño: {ap.pet?.owner?.name || '—'}</p>
                     {ap.notes && <p className="text-sm text-gray-600 mt-2">Notas: {ap.notes}</p>}
                   </div>
-                  <div className="flex gap-2">
-                    {ap.status !== 'COMPLETADA' && (
-                      <button onClick={() => openDiagnosis(ap)} className="px-3 py-1.5 text-sm text-teal hover:bg-teal/10 rounded-md">Crear Diagnóstico</button>
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    {normalized === 'PENDING' && (
+                      <>
+                        <button
+                          onClick={() => handleAccept(ap.id)}
+                          className="px-3 py-1.5 text-sm text-teal hover:bg-teal/10 rounded-md"
+                        >
+                          Confirmar
+                        </button>
+                        <button
+                          onClick={() => handleCancel(ap.id)}
+                          className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md"
+                        >
+                          Cancelar
+                        </button>
+                      </>
                     )}
-                    {ap.status !== 'COMPLETADA' && (
-                      <button onClick={() => completeAppointment(ap.id)} className="px-3 py-1.5 text-sm text-green-700 hover:bg-green-50 rounded-md">Marcar Completada</button>
+                    {normalized === 'ACCEPTED' && (
+                      <>
+                        <button
+                          onClick={() => openDiagnosis(ap)}
+                          className="px-3 py-1.5 text-sm text-teal hover:bg-teal/10 rounded-md"
+                        >
+                          Registrar Diagnóstico
+                        </button>
+                        <button
+                          onClick={() => completeAppointment(ap.id)}
+                          disabled={disableComplete}
+                          className={`px-3 py-1.5 text-sm rounded-md ${
+                            disableComplete
+                              ? 'text-gray-400 cursor-not-allowed bg-gray-50'
+                              : 'text-green-700 hover:bg-green-50'
+                          }`}
+                        >
+                          Marcar Completada
+                        </button>
+                      </>
                     )}
                   </div>
+                  {normalized === 'ACCEPTED' && !canCompleteWithoutDiagnosis(ap) && (
+                    <p className="text-xs text-red-600 mt-2 text-right">
+                      Registra un diagnóstico antes de completar la cita.
+                    </p>
+                  )}
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
 

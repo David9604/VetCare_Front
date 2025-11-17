@@ -61,11 +61,18 @@ export const serviceApi = {
   delete: (id) => axiosInstance.delete(`/admin/services/${id}`),
 };
 
-// Los diagnósticos no están implementados en el backend actual
-// export const diagnosisApi = {
-//   getById: (id) => axiosInstance.get(`/diagnosis/${id}`),
-//   create: (diagnosisData) => axiosInstance.post('/diagnosis', diagnosisData),
-// };
+export const diagnosisApi = {
+  getAll: (params) => axiosInstance.get('/diagnoses', params ? { params } : {}),
+  getAdmin: (params) => axiosInstance.get('/diagnoses/admin', params ? { params } : {}),
+  getById: (id) => axiosInstance.get(`/diagnoses/${id}`),
+  getByPet: (petId) => axiosInstance.get(`/diagnoses/pet/${petId}`),
+  getMine: () => axiosInstance.get('/diagnoses/my-diagnoses'),
+  create: (diagnosisData) => axiosInstance.post('/diagnoses', diagnosisData),
+  update: (id, diagnosisData) => axiosInstance.put(`/diagnoses/${id}`, diagnosisData),
+  activate: (id) => axiosInstance.put(`/diagnoses/${id}/activate`),
+  deactivate: (id) => axiosInstance.put(`/diagnoses/${id}/deactivate`),
+  downloadPdf: (id) => axiosInstance.get(`/diagnoses/${id}/pdf`, { responseType: 'blob' }),
+};
 
 export const userApi = {
   getAll: () => axiosInstance.get('/users'),
