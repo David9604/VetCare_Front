@@ -41,6 +41,7 @@ const DashboardLayout = ({ children, navigation }) => {
       { path: '/admin/pets', icon: 'pets', label: 'Mascotas' },
       { path: '/admin/services', icon: 'build', label: 'Servicios' },
       { path: '/admin/appointments', icon: 'event', label: 'Citas' },
+      { path: '/admin/medical-history', icon: 'medical_services', label: 'Historial Médico' },
       { path: '/profile', icon: 'account_circle', label: 'Mi Perfil' },
     ],
   }), []);

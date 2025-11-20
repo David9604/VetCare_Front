@@ -18,6 +18,7 @@ import AdminUsers from './pages/admin/Users';
 import AdminServices from './pages/admin/Services';
 import AdminAppointments from './pages/admin/Appointments';
 import AdminPets from './pages/admin/Pets';
+import AdminMedicalHistory from './pages/admin/MedicalHistory';
 import VeterinarianDashboard from './pages/veterinarian/Dashboard';
 import VeterinarianAppointments from './pages/veterinarian/Appointments';
 import VeterinarianDiagnosis from './pages/veterinarian/Diagnosis';
@@ -172,6 +173,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AdminAppointments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/medical-history"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminMedicalHistory />
               </ProtectedRoute>
             }
           />
