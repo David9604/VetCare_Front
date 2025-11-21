@@ -228,6 +228,8 @@ const VeterinarianAppointments = () => {
     };
 
     try {
+      await diagnosisApi.create(payload);
+
       if (currentStatus !== 'COMPLETED') {
         if (appointmentApi.complete) {
           await appointmentApi.complete(selectedAppointment.id);
@@ -236,8 +238,7 @@ const VeterinarianAppointments = () => {
         }
       }
 
-      await diagnosisApi.create(payload);
-      setFeedback({ type: 'success', message: 'Diagnóstico registrado. Ahora puedes completar la cita.' });
+      setFeedback({ type: 'success', message: 'Diagnóstico registrado y cita completada.' });
       setShowDiagnosisModal(false);
       setSelectedAppointment(null);
       setDiagnosisData({ observations: '', treatment: '', medications: '' });
