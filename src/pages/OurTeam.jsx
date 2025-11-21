@@ -1,4 +1,5 @@
 import React from 'react';
+import Footer from '../components/footer';
 
 const teamMembers = [
   {
@@ -29,33 +30,36 @@ const teamMembers = [
 
 const OurTeam = () => {
   return (
-    <div className="bg-gray-50 min-h-screen py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-extrabold text-teal-800 sm:text-5xl sm:tracking-tight lg:text-6xl">
-            Nuestro Equipo
-          </h1>
-          <p className="mt-5 max-w-xl mx-auto text-xl text-gray-500">
-            Conoce a los profesionales dedicados a cuidar de la salud y felicidad de tu mascota.
-          </p>
-        </div>
-        <div className="grid gap-8 lg:grid-cols-4 sm:grid-cols-2">
-          {teamMembers.map((member) => (
-            <div key={member.name} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-              <div className="p-6 text-center">
-                <img
-                  className="mx-auto h-32 w-32 rounded-full object-cover mb-4 border-4 border-teal-100"
-                  src={member.image}
-                  alt={member.name}
-                />
-                <h3 className="text-lg font-medium text-gray-900">{member.name}</h3>
-                <p className="text-sm text-teal-600 font-semibold uppercase tracking-wide mb-2">{member.role}</p>
-                <p className="text-gray-500 text-sm">{member.bio}</p>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <main className="flex-grow py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-extrabold text-teal-800 sm:text-5xl sm:tracking-tight lg:text-6xl">
+              Nuestro Equipo
+            </h1>
+            <p className="mt-5 max-w-xl mx-auto text-xl text-gray-500">
+              Conoce a los profesionales dedicados a cuidar de la salud y felicidad de tu mascota.
+            </p>
+          </div>
+          <div className="grid gap-8 lg:grid-cols-4 sm:grid-cols-2">
+            {teamMembers.map((member) => (
+              <div key={member.name} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <div className="p-6 text-center">
+                  <img
+                    className="mx-auto h-32 w-32 rounded-full object-cover mb-4 border-4 border-teal-100"
+                    src={member.image}
+                    alt={member.name}
+                  />
+                  <h3 className="text-lg font-medium text-gray-900">{member.name}</h3>
+                  <p className="text-sm text-teal-600 font-semibold uppercase tracking-wide mb-2">{member.role}</p>
+                  <p className="text-gray-500 text-sm">{member.bio}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 };

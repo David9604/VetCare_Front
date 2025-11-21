@@ -36,7 +36,6 @@ import VeterinarianAppointments from './pages/veterinarian/Appointments';
 import VeterinarianDiagnosis from './pages/veterinarian/Diagnosis';
 import Profile from './pages/Profile';
 import Navbar from './components/navbar';
-import Footer from './components/footer';
 import Catalog from './pages/product/Catalog';
 import Detail from './pages/product/Detail';
 import './App.css';
@@ -53,10 +52,10 @@ function App() {
           <Route path="/registro" element={<><Navbar /><Register /></>} />
           <Route path="/recuperar-password" element={<><Navbar /><RecoverPassword /></>} />
           <Route path="/restablecer-password" element={<><Navbar /><ResetPassword /></>} />
-          <Route path="/terminos" element={<><Navbar /><LegalTerms /><Footer /></>} />
-          <Route path="/privacidad" element={<><Navbar /><LegalPrivacy /><Footer /></>} />
-          <Route path="/nuestro-equipo" element={<><Navbar /><OurTeam /><Footer /></>} />
-          <Route path="/contacto" element={<><Navbar /><Contact /><Footer /></>} />
+          <Route path="/terminos" element={<><Navbar /><LegalTerms /></>} />
+          <Route path="/privacidad" element={<><Navbar /><LegalPrivacy /></>} />
+          <Route path="/nuestro-equipo" element={<><Navbar /><OurTeam /></>} />
+          <Route path="/contacto" element={<><Navbar /><Contact /></>} />
 
           {/* Catálogo Productos (roles autenticados) */}
           <Route
