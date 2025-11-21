@@ -1,15 +1,17 @@
 import axios from 'axios';
 
-// En desarrollo, usar proxy de Vite (/api)
-// En producción, usar variable de entorno
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// Base URL:
+// - Desarrollo: proxy Vite -> '/api' (ver vite.config.js)
+// - Producción: variable de entorno VITE_API_URL (definida en .env.production)
+// Fallback explícito al backend desplegado si la variable está ausente.
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://api.vetcareservices.online/api');
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Incluir cookies automáticamente
+  withCredentials: true, // Enviar cookies para sesiones basadas en JSESSIONID / Spring Security
 });
 
 // Con cookies, no necesitamos agregar tokens manualmente

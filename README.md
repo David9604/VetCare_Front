@@ -34,3 +34,32 @@ Front de AppWeb para la gestion de una veterinaria
    ```bash
       npm run dev
    ```
+### Variables de entorno
+
+El frontend usa Vite y carga variables según el modo.
+
+Crear archivo `.env.production` (ya agregado) con:
+```bash
+VITE_API_URL=https://api.vetcareservices.online/api
+```
+
+Opcional para desarrollo local (`.env.development`):
+```bash
+VITE_API_URL=/api
+```
+Esto permite que el proxy definido en `vite.config.js` redirija a `http://localhost:8080`.
+
+### Build para producción
+
+```bash
+npm run build
+```
+Genera archivos estáticos en `dist/`. Servirlos con cualquier servidor estático (Nginx, Apache, etc.). Si se despliega en un hosting separado del backend, asegúrate de:
+- Habilitar CORS con credenciales en el backend (`Access-Control-Allow-Credentials: true`).
+- Permitir origen del dominio donde se sirve el frontend (`Access-Control-Allow-Origin`).
+- Usar HTTPS consistente para que las cookies de sesión se envíen correctamente.
+
+### Preview local del build
+```bash
+npm run preview
+```

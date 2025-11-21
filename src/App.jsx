@@ -10,21 +10,30 @@ import OwnerDashboard from './pages/owner/Dashboard';
 import OwnerPets from './pages/owner/Pets';
 import OwnerAppointments from './pages/owner/Appointments';
 import OwnerHistory from './pages/owner/History';
+import Cart from './pages/owner/Cart';
+import PurchaseHistory from './pages/owner/PurchaseHistory';
 import EmployeeDashboard from './pages/employee/Dashboard';
 import EmployeePets from './pages/employee/Pets';
 import EmployeeAppointments from './pages/employee/Appointments';
+import SalesHistoryEmployee from './pages/employee/SalesHistory';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminUsers from './pages/admin/Users';
 import AdminServices from './pages/admin/Services';
 import AdminAppointments from './pages/admin/Appointments';
 import AdminPets from './pages/admin/Pets';
 import AdminMedicalHistory from './pages/admin/MedicalHistory';
+import ProductManagement from './pages/admin/ProductManagement';
+import SalesRegister from './pages/admin/SalesRegister';
+import SalesHistory from './pages/admin/SalesHistory';
 import VeterinarianDashboard from './pages/veterinarian/Dashboard';
 import VeterinarianAppointments from './pages/veterinarian/Appointments';
 import VeterinarianDiagnosis from './pages/veterinarian/Diagnosis';
 import Profile from './pages/Profile';
 import Navbar from './components/navbar';
+import Catalog from './pages/product/Catalog';
+import Detail from './pages/product/Detail';
 import './App.css';
+import './styles/products.css';
 
 function App() {
   return (
@@ -37,6 +46,24 @@ function App() {
           <Route path="/registro" element={<><Navbar /><Register /></>} />
           <Route path="/recuperar-password" element={<><Navbar /><RecoverPassword /></>} />
           <Route path="/restablecer-password" element={<><Navbar /><ResetPassword /></>} />
+
+          {/* Catálogo Productos (roles autenticados) */}
+          <Route
+            path="/productos"
+            element={
+              <ProtectedRoute allowedRoles={['OWNER','EMPLOYEE','VETERINARIAN','ADMIN']}>
+                <Catalog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/productos/:id"
+            element={
+              <ProtectedRoute allowedRoles={['OWNER','EMPLOYEE','VETERINARIAN','ADMIN']}>
+                <Detail />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Owner Routes */}
           <Route
@@ -71,6 +98,22 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/owner/cart"
+            element={
+              <ProtectedRoute allowedRoles={['OWNER']}>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owner/purchases"
+            element={
+              <ProtectedRoute allowedRoles={['OWNER']}>
+                <PurchaseHistory />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Employee Routes */}
           <Route
@@ -94,6 +137,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['EMPLOYEE']}>
                 <EmployeeAppointments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employee/sales/history"
+            element={
+              <ProtectedRoute allowedRoles={['EMPLOYEE']}>
+                <SalesHistoryEmployee />
               </ProtectedRoute>
             }
           />
@@ -181,6 +232,30 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AdminMedicalHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/productos"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ProductManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/ventas/registro"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <SalesRegister />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/ventas/historial"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <SalesHistory />
               </ProtectedRoute>
             }
           />

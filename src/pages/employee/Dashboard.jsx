@@ -15,6 +15,8 @@ const EmployeeDashboard = () => {
     { path: '/employee/dashboard', icon: 'dashboard', label: 'Dashboard' },
     { path: '/employee/pets', icon: 'pets', label: 'Mascotas' },
     { path: '/employee/appointments', icon: 'event', label: 'Citas' },
+    { path: '/productos', icon: 'store', label: 'Catálogo' },
+    { path: '/employee/sales/history', icon: 'receipt_long', label: 'Historial Ventas' },
   ];
 
   useEffect(() => {

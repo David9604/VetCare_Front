@@ -1,0 +1,94 @@
+/* Estilos base para módulo de productos y ventas
+   Enfocado en complementar utilidades Tailwind sin sobrescribirlas.
+*/
+
+:root {
+  --product-card-bg: #ffffff;
+  --product-card-border: #e5e7eb; /* gray-200 */
+  --product-card-radius: 8px;
+  --product-card-hover: #f0fdfa; /* teal-50 */
+  --product-accent: #26a69a;
+  --table-header-bg: #f8fafc;
+  --table-border: #e2e8f0; /* gray-200 */
+  --danger-color: #dc2626;
+  --warning-color: #f59e0b;
+  --inactive-overlay: rgba(0,0,0,0.35);
+}
+
+.product-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill,minmax(240px,1fr));
+}
+
+.product-card {
+  background: var(--product-card-bg);
+  border: 1px solid var(--product-card-border);
+  border-radius: var(--product-card-radius);
+  transition: box-shadow .15s ease, transform .15s ease, background-color .15s ease;
+  position: relative;
+}
+.product-card:hover {
+  box-shadow: var(--shadow-teal-sm);
+  background-color: var(--product-card-hover);
+  transform: translateY(-2px);
+}
+.product-card img { aspect-ratio: 1/1; }
+.product-card button { cursor: pointer; }
+.product-card .status-badge {
+  position: absolute;
+  top: .5rem;
+  left: .5rem;
+  background: var(--product-accent);
+  color: #fff;
+  padding: .25rem .5rem;
+  font-size: .65rem;
+  border-radius: 4px;
+  letter-spacing: .5px;
+}
+.product-card.inactive::after {
+  content: 'Inactivo';
+  position: absolute;
+  inset: 0;
+  background: var(--inactive-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 600;
+  border-radius: var(--product-card-radius);
+}
+
+/* Tablas de productos */
+.product-table-wrapper { width: 100%; }
+.product-table-wrapper table { border-collapse: collapse; width:100%; font-size: .85rem; }
+.product-table-wrapper th,
+.product-table-wrapper td { border:1px solid var(--table-border); padding:.5rem .6rem; text-align:left; }
+.product-table-wrapper thead th { background: var(--table-header-bg); font-weight:600; }
+.product-table-wrapper tbody tr:hover { background:#f1f5f9; }
+.product-table-wrapper .actions button { font-size:.7rem; }
+
+/* Formularios */
+.product-form input,
+.product-form textarea,
+.product-form select { border:1px solid var(--table-border); border-radius:6px; padding:.45rem .55rem; font-size:.85rem; }
+.product-form label { font-size:.65rem; text-transform:uppercase; font-weight:600; letter-spacing:.5px; color:#334155; }
+.product-form .form-row { display:flex; gap:.75rem; }
+
+/* Carrito */
+.cart-item { display:flex; gap:.75rem; border-bottom:1px solid var(--table-border); padding:.6rem 0; }
+.cart-item img { width:64px; height:64px; object-fit:cover; border-radius:6px; }
+.cart-summary { border-top:1px solid var(--table-border); margin-top:1rem; padding-top:1rem; display:flex; justify-content:space-between; align-items:center; }
+
+/* Utilidades menores */
+.badge { display:inline-block; padding:.25rem .5rem; border-radius:4px; font-size:.6rem; font-weight:600; letter-spacing:.5px; }
+.badge-danger { background: var(--danger-color); color:#fff; }
+.badge-warning { background: var(--warning-color); color:#fff; }
+.badge-accent { background: var(--product-accent); color:#fff; }
+
+/* Responsive tweak para modal/form */
+@media (max-width: 640px) {
+  .product-form .form-row { flex-direction:column; }
+  .product-card { padding: .75rem !important; }
+}

@@ -12,6 +12,7 @@ const VeterinarianDashboard = () => {
     { path: '/veterinarian/dashboard', icon: 'dashboard', label: 'Dashboard' },
     { path: '/veterinarian/appointments', icon: 'event', label: 'Citas' },
     { path: '/veterinarian/diagnoses', icon: 'medical_services', label: 'Diagnósticos' },
+    { path: '/productos', icon: 'store', label: 'Productos' },
   ];
 
   useEffect(() => {

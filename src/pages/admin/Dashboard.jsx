@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { userApi, petApi, appointmentApi, serviceApi } from '../../api/services';
+import { fetchPurchaseStatistics } from '../../api/products';
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -8,12 +9,19 @@ const AdminDashboard = () => {
   const [pets, setPets] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [services, setServices] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState(null);
 
   const navigation = [
     { path: '/admin/dashboard', icon: 'dashboard', label: 'Dashboard' },
     { path: '/admin/users', icon: 'groups', label: 'Usuarios' },
     { path: '/admin/services', icon: 'build', label: 'Servicios' },
     { path: '/admin/appointments', icon: 'event', label: 'Citas' },
+    { path: '/productos', icon: 'store', label: 'Catálogo' },
+    { path: '/admin/productos', icon: 'inventory', label: 'Gestión Productos' },
+    { path: '/admin/ventas/registro', icon: 'point_of_sale', label: 'Registro Ventas' },
+    { path: '/admin/ventas/historial', icon: 'receipt_long', label: 'Historial Ventas' },
   ];
 
   useEffect(() => {
@@ -36,6 +44,21 @@ const AdminDashboard = () => {
       }
     };
     load();
+  }, []);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      setStatsLoading(true); setStatsError(null);
+      try {
+        const data = await fetchPurchaseStatistics();
+        setStats(data);
+      } catch (e) {
+        setStatsError('Error cargando estadísticas de ventas');
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    loadStats();
   }, []);
 
   const counts = useMemo(() => {
@@ -94,6 +117,22 @@ const AdminDashboard = () => {
                 <p className="text-3xl font-bold text-gray-800">{counts.appointments}</p>
                 <p className="text-xs text-gray-500 mt-1">Hoy {counts.todayAppointments} · Pendientes {counts.pendingAppointments}</p>
               </div>
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center gap-3 mb-2"><span className="material-icons text-purple-600">point_of_sale</span><h3 className="text-sm font-medium text-gray-600">Ventas</h3></div>
+                {statsLoading ? (
+                  <p className="text-sm text-gray-500">Cargando...</p>
+                ) : statsError ? (
+                  <p className="text-xs text-red-600">{statsError}</p>
+                ) : stats ? (
+                  <>
+                    <p className="text-2xl font-bold text-gray-800">{stats.totalSales}</p>
+                    <p className="text-xs text-gray-500 mt-1">Ingresos: ${stats.totalRevenue?.toFixed?.(2) || stats.totalRevenue}</p>
+                    {stats.monthlyRevenue && Array.isArray(stats.monthlyRevenue) && (
+                      <p className="text-xs text-gray-500 mt-1">Último mes: ${stats.monthlyRevenue.slice(-1)[0]?.amount?.toFixed?.(2) || stats.monthlyRevenue.slice(-1)[0]?.amount}</p>
+                    )}
+                  </>
+                ) : <p className="text-xs text-gray-500">Sin datos</p>}
+              </div>
             </div>
 
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -116,6 +155,23 @@ const AdminDashboard = () => {
                   ))}
                 </div>
               )}
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6 mt-8">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2"><span className="material-icons text-purple-600">trending_up</span>Top Productos</h2>
+              {statsLoading ? <p className="text-sm text-gray-500">Cargando...</p> : statsError ? <p className="text-xs text-red-600">{statsError}</p> : stats?.topProducts?.length ? (
+                <div className="space-y-2">
+                  {stats.topProducts.slice(0,5).map(tp => (
+                    <div key={tp.productId} className="flex items-center justify-between border rounded-lg px-3 py-2">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-800 truncate">{tp.name || tp.productName || 'Producto ' + tp.productId}</p>
+                        <p className="text-xs text-gray-500">Ventas: {tp.salesCount} · Ingresos: ${tp.revenue?.toFixed?.(2) || tp.revenue}</p>
+                      </div>
+                      <span className="material-icons text-teal text-sm">local_offer</span>
+                    </div>
+                  ))}
+                </div>
+              ) : <p className="text-sm text-gray-500">Sin datos de productos destacados.</p>}
             </div>
           </>
         )}
