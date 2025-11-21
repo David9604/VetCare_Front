@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { fetchCategories, createCategory, updateCategory, deleteCategory } from '../../api/products';
+import { fetchCategories, createCategory, updateCategory, deleteCategory, fetchProducts } from '../../api/products';
 
 const CategoryForm = ({ category, onSubmit, onCancel }) => {
   const [form, setForm] = useState({ name: '', description: '' });
@@ -98,8 +98,27 @@ const Categories = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchCategories();
-      setCategories(data);
+      const [categoriesData, productsData] = await Promise.all([
+        fetchCategories(),
+        fetchProducts()
+      ]);
+      
+      // Contar productos por categoría
+      const productCountMap = {};
+      productsData.forEach(product => {
+        const categoryId = product.categoryId || product.category?.id;
+        if (categoryId) {
+          productCountMap[categoryId] = (productCountMap[categoryId] || 0) + 1;
+        }
+      });
+      
+      // Agregar el conteo a cada categoría
+      const categoriesWithCount = categoriesData.map(cat => ({
+        ...cat,
+        productCount: productCountMap[cat.id] || 0
+      }));
+      
+      setCategories(categoriesWithCount);
     } catch (e) {
       setError('Error cargando categorías');
     } finally {

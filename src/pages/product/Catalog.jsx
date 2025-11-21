@@ -20,13 +20,14 @@ const Catalog = () => {
     setLoading(true);
     setError(null);
     try {
-      const list = await fetchProducts();
+      // Cargar productos y categorías en paralelo
+      const [list, cats] = await Promise.all([
+        fetchProducts(),
+        fetchCategories().catch(() => []) // Si falla categorías, continuar con array vacío
+      ]);
       setProducts(list);
       setFiltered(list);
-      try {
-        const cats = await fetchCategories();
-        setCategories(cats);
-      } catch {}
+      setCategories(cats);
     } catch (e) {
       setError(e.message || 'Error cargando productos');
     } finally {
@@ -103,25 +104,34 @@ const Catalog = () => {
         </div>
         
         {loading && (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal"></div>
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 sm:grid-cols-2 grid-cols-1">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg shadow-sm p-4 animate-pulse">
+                <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+                <div className="bg-gray-200 h-4 rounded w-3/4 mb-2"></div>
+                <div className="bg-gray-200 h-4 rounded w-1/2 mb-4"></div>
+                <div className="bg-gray-200 h-8 rounded"></div>
+              </div>
+            ))}
           </div>
         )}
         {error && <p className="text-red-600 text-sm bg-red-50 p-4 rounded-lg mb-4">{error}</p>}
         
-        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 sm:grid-cols-2 grid-cols-1">
-          {filtered.map(p => (
-            <ProductCard
-              key={p.id}
-              product={p}
-              role={role}
-              onAddToCart={handleAddToCart}
-              onDelete={handleDelete}
-              onActivate={handleActivate}
-              onSelect={goDetail}
-            />
-          ))}
-        </div>
+        {!loading && (
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 sm:grid-cols-2 grid-cols-1">
+            {filtered.map(p => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                role={role}
+                onAddToCart={handleAddToCart}
+                onDelete={handleDelete}
+                onActivate={handleActivate}
+                onSelect={goDetail}
+              />
+            ))}
+          </div>
+        )}
         
         {!loading && filtered.length === 0 && (
           <div className="text-center py-12 bg-white rounded-lg shadow-sm">
