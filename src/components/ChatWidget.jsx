@@ -259,7 +259,7 @@ const ChatWidget = () => {
         aria-label="Abrir chat con el asistente"
         aria-expanded={open}
       >
-        <span className="material-icons">{open ? 'close' : 'pets'}</span>
+        <span className="material-icons">{open ? 'close' : 'help_outline'}</span>
       </button>
     </div>
   );
