@@ -302,7 +302,7 @@ const ChatWidget = () => {
       <button
         type="button"
         onClick={toggleOpen}
-        className="h-14 w-14 rounded-full bg-teal text-white shadow-lg flex items-center justify-center hover:bg-teal/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal"
+        className="h-14 w-14 rounded-full bg-teal text-white shadow-lg border-2 border-white/80 flex items-center justify-center hover:bg-teal/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal"
         aria-label="Abrir chat con el asistente"
         aria-expanded={open}
       >
