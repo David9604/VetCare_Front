@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { petApi, diagnosisApi } from '../../api/services';
+import { petApi, diagnosisApi, speciesApi } from '../../api/services';
 
 const OwnerHistory = () => {
   const [pets, setPets] = useState([]);
@@ -33,9 +33,37 @@ const OwnerHistory = () => {
     try {
       const response = await petApi.getAll();
       const petsData = response.data || [];
-      setPets(petsData);
-      if (petsData.length > 0) {
-        setSelectedPet(petsData[0]);
+      
+      // Cargar información completa de especies y razas para cada mascota
+      const petsWithDetails = await Promise.all(
+        petsData.map(async (pet) => {
+          try {
+            // Si ya tiene los objetos completos, no hacer nada
+            if (pet.species?.name && pet.breed?.name) {
+              return pet;
+            }
+            
+            // Si solo tiene IDs, cargar los nombres
+            const [speciesResponse, breedResponse] = await Promise.all([
+              pet.speciesId ? speciesApi.getAll().then(res => res.data.find(s => s.id === pet.speciesId)) : null,
+              pet.breedId ? speciesApi.getBreeds(pet.speciesId).then(res => res.data.find(b => b.id === pet.breedId)) : null
+            ]);
+            
+            return {
+              ...pet,
+              species: speciesResponse || pet.species,
+              breed: breedResponse || pet.breed
+            };
+          } catch (error) {
+            console.error('Error cargando detalles de mascota:', error);
+            return pet;
+          }
+        })
+      );
+      
+      setPets(petsWithDetails);
+      if (petsWithDetails.length > 0) {
+        setSelectedPet(petsWithDetails[0]);
       }
     } catch (error) {
       console.error('Error al cargar mascotas:', error);
@@ -121,11 +149,11 @@ const OwnerHistory = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
                     <span className="opacity-80">Especie:</span>
-                    <p className="font-medium">{selectedPet.species}</p>
+                    <p className="font-medium">{selectedPet.species?.name || selectedPet.species || 'N/A'}</p>
                   </div>
                   <div>
                     <span className="opacity-80">Raza:</span>
-                    <p className="font-medium">{selectedPet.breed}</p>
+                    <p className="font-medium">{selectedPet.breed?.name || selectedPet.breed || 'N/A'}</p>
                   </div>
                   <div>
                     <span className="opacity-80">Edad:</span>

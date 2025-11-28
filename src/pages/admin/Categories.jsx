@@ -184,10 +184,16 @@ const Categories = () => {
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
+            <button
+              onClick={() => navigate('/admin/productos')}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <span className="material-icons">arrow_back</span>
+            </button>
             <span className="material-icons text-teal text-4xl">category</span>
             <h1 className="text-3xl font-bold text-gray-800">Gestión de Categorías</h1>
           </div>
-          <p className="text-gray-600">Administra las categorías de productos</p>
+          <p className="text-gray-600 ml-14">Administra las categorías de productos</p>
         </div>
 
         {error && (
@@ -203,13 +209,6 @@ const Categories = () => {
           >
             <span className="material-icons">add_circle</span>
             Nueva Categoría
-          </button>
-          <button
-            onClick={() => navigate('/admin/productos')}
-            className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <span className="material-icons">arrow_back</span>
-            Volver a productos
           </button>
           <button
             onClick={loadCategories}

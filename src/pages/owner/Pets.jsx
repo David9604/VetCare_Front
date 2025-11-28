@@ -78,7 +78,35 @@ const OwnerPets = () => {
       const response = await petApi.getAll();
       // Filtrar solo mascotas activas
       const activePets = (response.data || []).filter(pet => pet.active !== false);
-      setPets(activePets);
+      
+      // Cargar información completa de especies y razas para cada mascota
+      const petsWithDetails = await Promise.all(
+        activePets.map(async (pet) => {
+          try {
+            // Si ya tiene los objetos completos, no hacer nada
+            if (pet.species?.name && pet.breed?.name) {
+              return pet;
+            }
+            
+            // Si solo tiene IDs, cargar los nombres
+            const [speciesResponse, breedResponse] = await Promise.all([
+              pet.speciesId ? speciesApi.getAll().then(res => res.data.find(s => s.id === pet.speciesId)) : null,
+              pet.breedId ? speciesApi.getBreeds(pet.speciesId).then(res => res.data.find(b => b.id === pet.breedId)) : null
+            ]);
+            
+            return {
+              ...pet,
+              species: speciesResponse || pet.species,
+              breed: breedResponse || pet.breed
+            };
+          } catch (error) {
+            console.error('Error cargando detalles de mascota:', error);
+            return pet;
+          }
+        })
+      );
+      
+      setPets(petsWithDetails);
     } catch (error) {
       console.error('Error cargando mascotas:', error);
       setFeedback({ type: 'error', message: 'Error al cargar las mascotas' });
@@ -99,8 +127,6 @@ const OwnerPets = () => {
         sex: formData.sex === 'M' ? 'Macho' : 'Hembra'
       };
       
-      console.log('Payload a enviar:', payload);
-      
       if (editingPet) {
         await petApi.update(editingPet.id, payload);
         setFeedback({ type: 'success', message: 'Mascota actualizada exitosamente' });
@@ -114,14 +140,12 @@ const OwnerPets = () => {
       loadPets();
     } catch (error) {
       console.error('Error al guardar:', error);
-      console.error('Detalle del error:', error.response?.data);
       setFeedback({ type: 'error', message: error.response?.data?.message || 'Error al guardar' });
     }
   };
 
   const handleEdit = (pet) => {
     setEditingPet(pet);
-    console.log('Pet a editar:', pet);
     setFormData({
       name: pet.name,
       speciesId: pet.species?.id || pet.speciesId || '',
@@ -207,8 +231,8 @@ const OwnerPets = () => {
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">{pet.name}</h3>
                 <div className="space-y-2 text-sm text-gray-600">
-                  <p><span className="font-medium">Especie:</span> {pet.species}</p>
-                  <p><span className="font-medium">Raza:</span> {pet.breed}</p>
+                  <p><span className="font-medium">Especie:</span> {pet.species?.name || pet.species || 'N/A'}</p>
+                  <p><span className="font-medium">Raza:</span> {pet.breed?.name || pet.breed || 'N/A'}</p>
                   <p><span className="font-medium">Sexo:</span> {pet.sex}</p>
                   <p><span className="font-medium">Edad:</span> {pet.age} años</p>
                   <p><span className="font-medium">Peso:</span> {pet.weight} kg</p>

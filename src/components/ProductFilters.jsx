@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SearchableDropdown from './SearchableDropdown';
 
-const ProductFilters = ({ onChange, categories = [] }) => {
+const ProductFilters = ({ onChange, categories = [], showActiveFilter = false }) => {
   const [text, setText] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
-  const [activeOnly, setActiveOnly] = useState(true);
+  const [activeOnly, setActiveOnly] = useState(false);
   const [categoryId, setCategoryId] = useState('');
 
   const onChangeRef = useRef(onChange);
@@ -75,17 +75,19 @@ const ProductFilters = ({ onChange, categories = [] }) => {
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Estado</label>
-        <label className="inline-flex items-center gap-2 text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded-md bg-gray-50">
-          <input
-            type="checkbox"
-            checked={activeOnly}
-            onChange={(e) => setActiveOnly(e.target.checked)}
-          />
-          Solo mostrar activos
-        </label>
-      </div>
+      {showActiveFilter && (
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">Estado</label>
+          <label className="inline-flex items-center gap-2 text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded-md bg-gray-50">
+            <input
+              type="checkbox"
+              checked={activeOnly}
+              onChange={(e) => setActiveOnly(e.target.checked)}
+            />
+            Solo mostrar activos
+          </label>
+        </div>
+      )}
     </div>
   );
 };

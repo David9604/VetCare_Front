@@ -17,7 +17,7 @@ const ProductManagement = () => {
     text: '',
     minPrice: '',
     maxPrice: '',
-    activeOnly: true,
+    activeOnly: false,
     categoryId: '',
   });
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -152,6 +152,7 @@ const ProductManagement = () => {
             <ProductFilters
               categories={categories}
               onChange={handleFilterChange}
+              showActiveFilter={true}
             />
           </div>
         )}
