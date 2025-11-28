@@ -65,22 +65,22 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-10">
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow-sm p-8">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 rounded-full bg-teal-light flex items-center justify-center mb-4">
-            <img src={logo} alt="VetCare Logo" className="w-12 h-12" />
+    <div className="bg-gray-100 px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-lg shadow-sm p-4 sm:p-6 md:p-8 my-4 sm:my-6 md:my-8">
+        <div className="flex flex-col items-center mb-6 sm:mb-8">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-teal-light flex items-center justify-center mb-3 sm:mb-4">
+            <img src={logo} alt="VetCare Logo" className="w-10 h-10 sm:w-12 sm:h-12" />
           </div>
-          <h4 className="text-2xl font-bold text-gray-800">VetCare</h4>
+          <h4 className="text-xl sm:text-2xl font-bold text-gray-800">VetCare</h4>
         </div>
-        <div className="text-center mb-8">
-          <h5 className="text-xl font-semibold text-gray-800 mb-2">Crea tu cuenta</h5>
+        <div className="text-center mb-6 sm:mb-8">
+          <h5 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">Crea tu cuenta</h5>
           <p className="text-gray-600 text-sm">Completa el formulario para registrarte</p>
         </div>
         {feedback && (
-          <div className={`mb-6 text-sm rounded-md px-4 py-3 ${feedback.type === 'success' ? 'bg-teal/10 text-teal' : 'bg-red-100 text-red-600'}`}>{feedback.message}</div>
+          <div className={`mb-4 sm:mb-6 text-sm rounded-md px-4 py-3 ${feedback.type === 'success' ? 'bg-teal/10 text-teal' : 'bg-red-100 text-red-600'}`}>{feedback.message}</div>
         )}
-        <form onSubmit={handleSubmit} className="grid gap-6 md:grid-cols-2">
+        <form onSubmit={handleSubmit} className="grid gap-4 sm:gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-1 md:col-span-2">
             <label htmlFor="name" className="text-sm font-medium text-gray-700">Nombre Completo</label>
             <input
@@ -169,10 +169,10 @@ const Register = () => {
             {errors.confirmPassword && <span className="text-xs text-red-600">{errors.confirmPassword}</span>}
           </div>
           <div className="md:col-span-2">
-            <button type="submit" className="w-full rounded-lg bg-teal h-12 text-white font-semibold text-sm shadow-teal-sm hover:shadow-teal-lg transition-shadow">Registrarse</button>
+            <button type="submit" className="w-full rounded-lg bg-teal h-11 sm:h-12 text-white font-semibold text-sm shadow-teal-sm hover:shadow-teal-lg transition-shadow">Registrarse</button>
           </div>
         </form>
-        <div className="text-center mt-8 pt-6 border-t border-gray-200">
+        <div className="text-center mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
           <p className="text-sm text-gray-600">¿Ya tienes una cuenta?{' '}<Link to="/login" className="text-teal font-semibold hover:underline">Iniciar Sesión</Link></p>
         </div>
       </div>

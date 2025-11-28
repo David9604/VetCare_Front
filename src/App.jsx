@@ -36,6 +36,7 @@ import VeterinarianAppointments from './pages/veterinarian/Appointments';
 import VeterinarianDiagnosis from './pages/veterinarian/Diagnosis';
 import Profile from './pages/Profile';
 import Navbar from './components/navbar';
+import Footer from './components/footer';
 import Catalog from './pages/product/Catalog';
 import Detail from './pages/product/Detail';
 import './App.css';
@@ -48,8 +49,8 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<><Navbar /><Home /></>} />
-          <Route path="/login" element={<><Navbar /><Login /></>} />
-          <Route path="/registro" element={<><Navbar /><Register /></>} />
+          <Route path="/login" element={<><Navbar /><Login /><Footer /></>} />
+          <Route path="/registro" element={<><Navbar /><Register /><Footer /></>} />
           <Route path="/recuperar-password" element={<><Navbar /><RecoverPassword /></>} />
           <Route path="/restablecer-password" element={<><Navbar /><ResetPassword /></>} />
           <Route path="/terminos" element={<><Navbar /><LegalTerms /></>} />
