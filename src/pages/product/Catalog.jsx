@@ -9,6 +9,13 @@ import { useNavigate } from 'react-router-dom';
 const Catalog = () => {
   const [products, setProducts] = useState([]);
   const [filtered, setFiltered] = useState([]);
+  const [filters, setFilters] = useState({
+    text: '',
+    minPrice: '',
+    maxPrice: '',
+    activeOnly: true,
+    categoryId: '',
+  });
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -16,6 +23,29 @@ const Catalog = () => {
   const { user } = useAuth();
   const role = user?.role;
   const navigate = useNavigate();
+
+  const applyFilters = (list = [], { text, minPrice, maxPrice, activeOnly, categoryId }) => {
+    let result = [...list];
+    if (text) {
+      const t = text.toLowerCase();
+      result = result.filter(
+        (p) => p.name.toLowerCase().includes(t) || p.description.toLowerCase().includes(t)
+      );
+    }
+    if (minPrice) {
+      result = result.filter((p) => parseFloat(p.price) >= parseFloat(minPrice));
+    }
+    if (maxPrice) {
+      result = result.filter((p) => parseFloat(p.price) <= parseFloat(maxPrice));
+    }
+    if (activeOnly) {
+      result = result.filter((p) => p.active);
+    }
+    if (categoryId) {
+      result = result.filter((p) => (p.categoryId || p.category?.id) == categoryId);
+    }
+    return result;
+  };
 
   const load = async () => {
     setLoading(true);
@@ -27,7 +57,7 @@ const Catalog = () => {
         fetchCategories().catch(() => []) // Si falla categorías, continuar con array vacío
       ]);
       setProducts(list);
-      setFiltered(list);
+      setFiltered(applyFilters(list, filters));
       setCategories(cats);
     } catch (e) {
       setError(e.message || 'Error cargando productos');
@@ -38,25 +68,13 @@ const Catalog = () => {
 
   useEffect(() => { load(); }, []);
 
-  const handleFilters = ({ text, minPrice, maxPrice, activeOnly, categoryId }) => {
-    let list = [...products];
-    if (text) {
-      const t = text.toLowerCase();
-      list = list.filter(p => p.name.toLowerCase().includes(t) || p.description.toLowerCase().includes(t));
-    }
-    if (minPrice) {
-      list = list.filter(p => parseFloat(p.price) >= parseFloat(minPrice));
-    }
-    if (maxPrice) {
-      list = list.filter(p => parseFloat(p.price) <= parseFloat(maxPrice));
-    }
-    if (activeOnly) {
-      list = list.filter(p => p.active);
-    }
-    if (categoryId) {
-      list = list.filter(p => (p.categoryId || p.category?.id) == categoryId);
-    }
-    setFiltered(list);
+  useEffect(() => {
+    setFiltered(applyFilters(products, filters));
+  }, [products]);
+
+  const handleFilters = (nextFilters) => {
+    setFilters(nextFilters);
+    setFiltered(applyFilters(products, nextFilters));
   };
 
   const handleAddToCart = async (productId) => {
