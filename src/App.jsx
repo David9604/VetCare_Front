@@ -29,6 +29,8 @@ import AdminPets from './pages/admin/Pets';
 import AdminMedicalHistory from './pages/admin/MedicalHistory';
 import ProductManagement from './pages/admin/ProductManagement';
 import Categories from './pages/admin/Categories';
+import SpeciesManagement from './pages/admin/SpeciesManagement';
+import Breeds from './pages/admin/Breeds';
 import SalesRegister from './pages/admin/SalesRegister';
 import SalesHistory from './pages/admin/SalesHistory';
 import VeterinarianDashboard from './pages/veterinarian/Dashboard';
@@ -267,6 +269,22 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <Categories />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/especies"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <SpeciesManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/razas"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <Breeds />
               </ProtectedRoute>
             }
           />

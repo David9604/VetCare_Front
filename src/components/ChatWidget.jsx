@@ -11,8 +11,10 @@ const ChatWidget = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [messageCount, setMessageCount] = useState(0);
+  const [showWelcome, setShowWelcome] = useState(false);
   const messagesEndRef = useRef(null);
   const refreshTimeoutRef = useRef(null);
+  const welcomeTimeoutRef = useRef(null);
   const isGuest = !user;
   const isOwner = user?.role === 'OWNER';
   const guestLimit = 5;
@@ -60,8 +62,29 @@ const ChatWidget = () => {
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
+      if (welcomeTimeoutRef.current) {
+        clearTimeout(welcomeTimeoutRef.current);
+      }
     };
   }, []);
+
+  // Mostrar mensaje de bienvenida cuando el usuario se loguea
+  useEffect(() => {
+    if (user && !isGuest) {
+      setShowWelcome(true);
+      welcomeTimeoutRef.current = setTimeout(() => {
+        setShowWelcome(false);
+      }, 5000); // Se oculta después de 5 segundos
+    } else {
+      setShowWelcome(false);
+    }
+    
+    return () => {
+      if (welcomeTimeoutRef.current) {
+        clearTimeout(welcomeTimeoutRef.current);
+      }
+    };
+  }, [user, isGuest]);
 
   const scheduleGuestRefresh = () => {
     if (!isGuest) return;
@@ -166,6 +189,30 @@ const ChatWidget = () => {
 
   return (
     <div className="fixed bottom-6 left-6 z-50 flex flex-col items-start gap-3">
+      {/* Mensaje de bienvenida flotante */}
+      {showWelcome && !open && (
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4 max-w-xs animate-fade-in">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-full bg-teal/10 flex items-center justify-center flex-shrink-0">
+              <span className="material-icons text-teal text-xl">support_agent</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-800 mb-1">
+                ¡Hola{user?.name ? `, ${user.name.split(' ')[0]}` : ''}! 👋
+              </p>
+              <p className="text-xs text-gray-600">¿En qué puedo ayudarte hoy?</p>
+            </div>
+            <button
+              onClick={() => setShowWelcome(false)}
+              className="text-gray-400 hover:text-gray-600"
+              aria-label="Cerrar mensaje"
+            >
+              <span className="material-icons text-sm">close</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {open && (
         <div className="w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between bg-teal text-white px-4 py-3">

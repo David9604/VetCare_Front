@@ -8,6 +8,7 @@ const Cart = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [purchasing, setPurchasing] = useState(false);
+  const [localQuantities, setLocalQuantities] = useState({});
 
   const load = async () => {
     setLoading(true);
@@ -15,6 +16,12 @@ const Cart = () => {
     try {
       const data = await getCart();
       setCart(data);
+      // Inicializar cantidades locales
+      const quantities = {};
+      data.items?.forEach(item => {
+        quantities[item.id] = item.quantity;
+      });
+      setLocalQuantities(quantities);
     } catch (e) {
       setError('Error cargando carrito');
     } finally {
@@ -24,12 +31,59 @@ const Cart = () => {
 
   useEffect(() => { load(); }, []);
 
-  const handleUpdate = async (itemId, quantity) => {
+  const handleQuantityChange = (itemId, value) => {
+    // Actualizar cantidad local sin llamar al backend
+    setLocalQuantities(prev => ({
+      ...prev,
+      [itemId]: value
+    }));
+  };
+
+  const handleQuantityBlur = async (itemId) => {
+    // Al perder el foco, actualizar en el backend si la cantidad es válida
+    const quantity = localQuantities[itemId];
+    const originalItem = cart.items.find(item => item.id === itemId);
+    
+    if (quantity === '' || quantity <= 0) {
+      // Restaurar cantidad original si es inválida
+      if (originalItem) {
+        setLocalQuantities(prev => ({
+          ...prev,
+          [itemId]: originalItem.quantity
+        }));
+      }
+      return;
+    }
+
+    // Validar stock disponible antes de actualizar
+    if (originalItem && parseInt(quantity, 10) > originalItem.availableStock) {
+      setError(`Stock insuficiente para ${originalItem.productName}. Disponible: ${originalItem.availableStock}`);
+      // Restaurar cantidad original
+      setLocalQuantities(prev => ({
+        ...prev,
+        [itemId]: originalItem.quantity
+      }));
+      // Limpiar error después de 5 segundos
+      setTimeout(() => setError(null), 5000);
+      return;
+    }
+
     try {
-      const data = await updateCartItem(itemId, quantity);
+      const data = await updateCartItem(itemId, parseInt(quantity, 10));
       setCart(data);
+      setError(null);
     } catch (e) {
-      alert('Error actualizando item');
+      const errorMsg = e.response?.data || 'Error actualizando la cantidad del producto';
+      setError(errorMsg);
+      // Restaurar cantidad original en caso de error
+      if (originalItem) {
+        setLocalQuantities(prev => ({
+          ...prev,
+          [itemId]: originalItem.quantity
+        }));
+      }
+      // Limpiar error después de 5 segundos
+      setTimeout(() => setError(null), 5000);
     }
   };
 
@@ -50,6 +104,31 @@ const Cart = () => {
 
   const handlePurchase = async () => {
     if (!cart || cart.totalItems === 0) return;
+    
+    // Validar que todas las cantidades locales sean válidas
+    const invalidItems = cart.items.filter(item => {
+      const localQty = localQuantities[item.id];
+      return !localQty || localQty === '' || localQty <= 0 || localQty > item.availableStock;
+    });
+    
+    if (invalidItems.length > 0) {
+      alert('Por favor, verifica que todas las cantidades sean válidas (mayor a 0 y no excedan el stock disponible)');
+      return;
+    }
+    
+    // Sincronizar todas las cantidades con el backend antes de comprar
+    try {
+      for (const item of cart.items) {
+        const localQty = parseInt(localQuantities[item.id], 10);
+        if (localQty !== item.quantity) {
+          await updateCartItem(item.id, localQty);
+        }
+      }
+    } catch (e) {
+      alert('Error sincronizando cantidades');
+      return;
+    }
+    
     setPurchasing(true);
     try {
       const purchase = await purchaseFromCart();
@@ -84,7 +163,14 @@ const Cart = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="space-y-4 mb-6">
               {cart.items.map(item => (
-                <CartItem key={item.id} item={item} onUpdate={handleUpdate} onRemove={handleRemove} />
+                <CartItem 
+                  key={item.id} 
+                  item={item} 
+                  quantity={localQuantities[item.id] || item.quantity}
+                  onQuantityChange={handleQuantityChange}
+                  onQuantityBlur={handleQuantityBlur}
+                  onRemove={handleRemove} 
+                />
               ))}
             </div>
             <div className="border-t pt-6 flex flex-col md:flex-row justify-between items-center gap-4">

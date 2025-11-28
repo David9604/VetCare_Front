@@ -45,6 +45,7 @@ const DashboardLayout = ({ children, navigation }) => {
     ADMIN: [
       { path: '/admin/dashboard', icon: 'dashboard', label: 'Dashboard' },
       { path: '/admin/users', icon: 'groups', label: 'Usuarios' },
+      { path: '/admin/especies', icon: 'category', label: 'Especies' },
       { path: '/admin/pets', icon: 'pets', label: 'Mascotas' },
       { path: '/admin/services', icon: 'build', label: 'Servicios' },
       { path: '/admin/appointments', icon: 'event', label: 'Citas' },

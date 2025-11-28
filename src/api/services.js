@@ -93,3 +93,25 @@ export const userApi = {
   deactivate: (id) => axiosInstance.put(`/admin/users/deactivate`, { id }),
   resetPassword: (id) => axiosInstance.put(`/admin/users/${id}/reset-password`),
 };
+
+export const speciesApi = {
+  getAll: () => axiosInstance.get('/species'),
+  getById: (id) => axiosInstance.get(`/species/${id}`),
+  getBreeds: (speciesId) => axiosInstance.get(`/species/${speciesId}/breeds`),
+  create: (speciesData) => axiosInstance.post('/species', speciesData),
+  update: (id, speciesData) => axiosInstance.put(`/species/${id}`, speciesData),
+  delete: (id) => axiosInstance.delete(`/species/${id}`),
+  activate: (id) => axiosInstance.put(`/species/${id}/activate`),
+  deactivate: (id) => axiosInstance.put(`/species/${id}/deactivate`),
+};
+
+export const breedApi = {
+  getAll: () => axiosInstance.get('/breeds'),
+  getById: (id) => axiosInstance.get(`/breeds/${id}`),
+  getBySpecies: (speciesId) => axiosInstance.get(`/species/${speciesId}/breeds`),
+  create: (breedData) => axiosInstance.post('/breeds', breedData),
+  update: (id, breedData) => axiosInstance.put(`/breeds/${id}`, breedData),
+  delete: (id) => axiosInstance.delete(`/breeds/${id}`),
+  activate: (id) => axiosInstance.put(`/breeds/${id}/activate`),
+  deactivate: (id) => axiosInstance.put(`/breeds/${id}/deactivate`),
+};

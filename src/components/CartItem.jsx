@@ -1,6 +1,6 @@
 import React from 'react';
 
-const CartItem = ({ item, onUpdate, onRemove }) => {
+const CartItem = ({ item, quantity, onQuantityChange, onQuantityBlur, onRemove }) => {
   if (!item) return null;
   return (
     <div className="flex gap-3 items-center border-b py-2">
@@ -14,10 +14,12 @@ const CartItem = ({ item, onUpdate, onRemove }) => {
         <div className="flex items-center gap-2 mt-1">
           <input
             type="number"
-            min={1}
-            max={item.availableStock}
-            value={item.quantity}
-            onChange={(e) => onUpdate?.(item.id, parseInt(e.target.value, 10))}
+            value={quantity}
+            onChange={(e) => {
+              const val = e.target.value;
+              onQuantityChange?.(item.id, val);
+            }}
+            onBlur={() => onQuantityBlur?.(item.id)}
             className="border w-20 px-2 py-1 rounded"
           />
           <button onClick={() => onRemove?.(item.id)} className="text-red-600 text-xs underline">Quitar</button>

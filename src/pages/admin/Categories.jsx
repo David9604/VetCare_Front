@@ -312,24 +312,10 @@ const Categories = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {cat.productCount || 0}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="flex gap-2 justify-end">
-                            <button
-                              onClick={() => openEdit(cat)}
-                              className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                              title="Editar"
-                            >
-                              <span className="material-icons text-sm">edit</span>
-                              Editar
-                            </button>
-                            <button
-                              onClick={() => handleDelete(cat.id)}
-                              className="text-red-600 hover:text-red-800 flex items-center gap-1"
-                              title="Eliminar"
-                            >
-                              <span className="material-icons text-sm">delete</span>
-                              Eliminar
-                            </button>
+                            <button onClick={() => openEdit(cat)} className="px-3 py-1.5 text-teal hover:bg-teal/10 rounded-md">Editar</button>
+                            <button onClick={() => handleDelete(cat.id)} className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-md">Eliminar</button>
                           </div>
                         </td>
                       </tr>

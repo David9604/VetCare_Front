@@ -60,14 +60,40 @@ const OwnerAppointments = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const startDateTime = `${formData.date}T${formData.time}`;
-      await appointmentApi.create({ ...formData, startDateTime });
+      const startDateTime = `${formData.date}T${formData.time}:00`;
+      
+      // Validar que la fecha no sea el mismo día
+      const selectedDate = new Date(formData.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      if (selectedDate.getTime() === today.getTime()) {
+        setFeedback({ type: 'error', message: 'No se pueden agendar citas para el mismo día. Por favor selecciona una fecha futura.' });
+        return;
+      }
+      
+      // Validar que la fecha y hora sean futuras
+      const selectedDateTime = new Date(startDateTime);
+      const now = new Date();
+      if (selectedDateTime <= now) {
+        setFeedback({ type: 'error', message: 'La fecha y hora deben ser futuras' });
+        return;
+      }
+      
+      const payload = {
+        petId: parseInt(formData.petId, 10),
+        serviceId: parseInt(formData.serviceId, 10),
+        startDateTime: startDateTime,
+        note: ''
+      };
+      await appointmentApi.create(payload);
       setFeedback({ type: 'success', message: 'Cita agendada exitosamente' });
       setShowModal(false);
       setFormData({ petId: '', serviceId: '', date: '', time: '', assignedToId: '' });
       loadData();
     } catch (error) {
-      setFeedback({ type: 'error', message: error.response?.data?.message || 'Error al agendar cita' });
+      setFeedback({ type: 'error', message: error.response?.data?.message || error.response?.data?.startDateTime || 'Error al agendar cita' });
     }
   };
 
@@ -192,12 +218,12 @@ const OwnerAppointments = () => {
                   <input
                     type="date"
                     required
-                    min={new Date().toISOString().split('T')[0]}
+                    min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal"
                   />
-                </div>
+                  <p className="text-xs text-gray-500 mt-1">Las citas deben agendarse con al menos un día de anticipación</p>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Hora</label>
                   <input
@@ -207,6 +233,7 @@ const OwnerAppointments = () => {
                     onChange={(e) => setFormData({ ...formData, time: e.target.value })}
                     className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal"
                   />
+                </div>
                 </div>
                 <div className="flex gap-3 pt-4">
                   <button

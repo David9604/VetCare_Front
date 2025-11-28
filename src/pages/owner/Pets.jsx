@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import SearchableDropdown from '../../components/SearchableDropdown';
-import { petApi } from '../../api/services';
+import { petApi, speciesApi } from '../../api/services';
 
 const OwnerPets = () => {
   const [pets, setPets] = useState([]);
@@ -10,13 +10,16 @@ const OwnerPets = () => {
   const [editingPet, setEditingPet] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    species: '',
-    breed: '',
+    speciesId: '',
+    breedId: '',
     age: '',
     weight: '',
     sex: '',
   });
   const [feedback, setFeedback] = useState(null);
+  const [species, setSpecies] = useState([]);
+  const [breeds, setBreeds] = useState([]);
+  const [loadingBreeds, setLoadingBreeds] = useState(false);
 
   const sexOptions = useMemo(() => ([
     { value: 'M', label: 'Macho' },
@@ -36,7 +39,39 @@ const OwnerPets = () => {
 
   useEffect(() => {
     loadPets();
+    loadSpecies();
   }, []);
+
+  useEffect(() => {
+    if (formData.speciesId) {
+      loadBreeds(formData.speciesId);
+    } else {
+      setBreeds([]);
+      setFormData(prev => ({ ...prev, breedId: '' }));
+    }
+  }, [formData.speciesId]);
+
+  const loadSpecies = async () => {
+    try {
+      const response = await speciesApi.getAll();
+      setSpecies(response.data || []);
+    } catch (error) {
+      console.error('Error cargando especies:', error);
+    }
+  };
+
+  const loadBreeds = async (speciesId) => {
+    setLoadingBreeds(true);
+    try {
+      const response = await speciesApi.getBreeds(speciesId);
+      setBreeds(response.data || []);
+    } catch (error) {
+      console.error('Error cargando razas:', error);
+      setBreeds([]);
+    } finally {
+      setLoadingBreeds(false);
+    }
+  };
 
   const loadPets = async () => {
     try {
@@ -55,31 +90,45 @@ const OwnerPets = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        name: formData.name.trim(),
+        speciesId: parseInt(formData.speciesId, 10),
+        breedId: parseInt(formData.breedId, 10),
+        age: parseInt(formData.age, 10),
+        weight: parseFloat(formData.weight),
+        sex: formData.sex === 'M' ? 'Macho' : 'Hembra'
+      };
+      
+      console.log('Payload a enviar:', payload);
+      
       if (editingPet) {
-        await petApi.update(editingPet.id, formData);
+        await petApi.update(editingPet.id, payload);
         setFeedback({ type: 'success', message: 'Mascota actualizada exitosamente' });
       } else {
-        await petApi.create(formData);
+        await petApi.create(payload);
         setFeedback({ type: 'success', message: 'Mascota registrada exitosamente' });
       }
       setShowModal(false);
       setEditingPet(null);
-      setFormData({ name: '', species: '', breed: '', age: '', weight: '', sex: '' });
+      setFormData({ name: '', speciesId: '', breedId: '', age: '', weight: '', sex: '' });
       loadPets();
     } catch (error) {
+      console.error('Error al guardar:', error);
+      console.error('Detalle del error:', error.response?.data);
       setFeedback({ type: 'error', message: error.response?.data?.message || 'Error al guardar' });
     }
   };
 
   const handleEdit = (pet) => {
     setEditingPet(pet);
+    console.log('Pet a editar:', pet);
     setFormData({
       name: pet.name,
-      species: pet.species,
-      breed: pet.breed,
+      speciesId: pet.species?.id || pet.speciesId || '',
+      breedId: pet.breed?.id || pet.breedId || '',
       age: pet.age,
       weight: pet.weight,
-      sex: pet.sex,
+      sex: pet.sex === 'Macho' ? 'M' : pet.sex === 'Hembra' ? 'F' : 'M',
     });
     setShowModal(true);
   };
@@ -111,7 +160,7 @@ const OwnerPets = () => {
           <button
             onClick={() => {
               setEditingPet(null);
-              setFormData({ name: '', species: '', breed: '', age: '', weight: '', sex: '' });
+              setFormData({ name: '', speciesId: '', breedId: '', age: '', weight: '', sex: '' });
               setShowModal(true);
             }}
             className="flex items-center gap-2 px-4 py-2 bg-teal text-white rounded-lg shadow-teal-sm hover:shadow-teal-lg transition-shadow"
@@ -152,25 +201,15 @@ const OwnerPets = () => {
                     <span className="material-icons text-teal text-2xl">pets</span>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(pet)}
-                      className="p-1 text-gray-600 hover:text-teal"
-                    >
-                      <span className="material-icons text-xl">edit</span>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(pet.id)}
-                      className="p-1 text-gray-600 hover:text-red-600"
-                    >
-                      <span className="material-icons text-xl">delete</span>
-                    </button>
+                    <button onClick={() => handleEdit(pet)} className="px-3 py-1.5 text-teal hover:bg-teal/10 rounded-md">Editar</button>
+                    <button onClick={() => handleDelete(pet.id)} className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-md">Eliminar</button>
                   </div>
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">{pet.name}</h3>
                 <div className="space-y-2 text-sm text-gray-600">
                   <p><span className="font-medium">Especie:</span> {pet.species}</p>
                   <p><span className="font-medium">Raza:</span> {pet.breed}</p>
-                  <p><span className="font-medium">Sexo:</span> {pet.sex === 'M' ? 'Macho' : 'Hembra'}</p>
+                  <p><span className="font-medium">Sexo:</span> {pet.sex}</p>
                   <p><span className="font-medium">Edad:</span> {pet.age} años</p>
                   <p><span className="font-medium">Peso:</span> {pet.weight} kg</p>
                 </div>
@@ -199,22 +238,27 @@ const OwnerPets = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Especie</label>
-                  <input
-                    type="text"
+                  <SearchableDropdown
+                    options={species}
+                    value={formData.speciesId}
+                    onChange={(val) => setFormData({ ...formData, speciesId: val || '', breedId: '' })}
+                    placeholder="Seleccionar especie"
                     required
-                    value={formData.species}
-                    onChange={(e) => setFormData({ ...formData, species: e.target.value })}
-                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal"
+                    valueKey="id"
+                    getOptionLabel={(opt) => opt.name}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Raza</label>
-                  <input
-                    type="text"
+                  <SearchableDropdown
+                    options={breeds}
+                    value={formData.breedId}
+                    onChange={(val) => setFormData({ ...formData, breedId: val || '' })}
+                    placeholder={loadingBreeds ? "Cargando razas..." : formData.speciesId ? "Seleccionar raza" : "Primero selecciona una especie"}
                     required
-                    value={formData.breed}
-                    onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
-                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal"
+                    disabled={!formData.speciesId || loadingBreeds}
+                    valueKey="id"
+                    getOptionLabel={(opt) => opt.name}
                   />
                 </div>
                 <div>

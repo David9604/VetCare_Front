@@ -13,6 +13,15 @@ const AdminDashboard = () => {
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState(null);
 
+  // Función para formatear números con separadores de miles
+  const formatCurrency = (value) => {
+    if (!value && value !== 0) return '0';
+    return new Intl.NumberFormat('es-CO', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(value);
+  };
+
   const navigation = [
     { path: '/admin/dashboard', icon: 'dashboard', label: 'Dashboard' },
     { path: '/admin/users', icon: 'groups', label: 'Usuarios' },
@@ -127,9 +136,9 @@ const AdminDashboard = () => {
                 ) : stats ? (
                   <>
                     <p className="text-2xl font-bold text-gray-800">{stats.totalOrders || 0}</p>
-                    <p className="text-xs text-gray-500 mt-1">Ingresos: ${stats.totalAmount?.toFixed?.(2) || stats.totalAmount || 0}</p>
+                    <p className="text-xs text-gray-500 mt-1">Ingresos: ${formatCurrency(stats.totalAmount)}</p>
                     {stats.averageOrderValue && (
-                      <p className="text-xs text-gray-500 mt-1">Promedio: ${stats.averageOrderValue?.toFixed?.(2)}</p>
+                      <p className="text-xs text-gray-500 mt-1">Promedio: ${formatCurrency(stats.averageOrderValue)}</p>
                     )}
                   </>
                 ) : <p className="text-xs text-gray-500">Sin datos</p>}

@@ -12,6 +12,7 @@ const Catalog = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const { user } = useAuth();
   const role = user?.role;
   const navigate = useNavigate();
@@ -61,9 +62,14 @@ const Catalog = () => {
   const handleAddToCart = async (productId) => {
     try {
       await addToCart({ productId, quantity: 1 });
-      alert('Producto agregado al carrito');
+      const productName = products.find(p => p.id === productId)?.name || 'Producto';
+      setSuccessMessage(`${productName} agregado al carrito exitosamente`);
+      setError(null);
+      setTimeout(() => setSuccessMessage(null), 4000);
     } catch (e) {
-      alert('Error al agregar al carrito');
+      setError(e.response?.data || 'Error al agregar al carrito. Por favor intenta de nuevo.');
+      setSuccessMessage(null);
+      setTimeout(() => setError(null), 4000);
     }
   };
 
@@ -116,6 +122,12 @@ const Catalog = () => {
           </div>
         )}
         {error && <p className="text-red-600 text-sm bg-red-50 p-4 rounded-lg mb-4">{error}</p>}
+        {successMessage && (
+          <div className="flex items-center gap-2 text-green-700 bg-green-50 p-4 rounded-lg mb-4">
+            <span className="material-icons">check_circle</span>
+            <span>{successMessage}</span>
+          </div>
+        )}
         
         {!loading && (
           <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 sm:grid-cols-2 grid-cols-1">

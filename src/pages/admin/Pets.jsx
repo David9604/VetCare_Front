@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { petApi } from '../../api/services';
+import SearchableDropdown from '../../components/SearchableDropdown';
+import { petApi, speciesApi } from '../../api/services';
 
 const AdminPets = () => {
   const [loading, setLoading] = useState(true);
@@ -11,16 +12,51 @@ const AdminPets = () => {
   const [editingPet, setEditingPet] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    species: '',
-    breed: '',
+    speciesId: '',
+    breedId: '',
     age: '',
     weight: '',
     sex: ''
   });
+  const [species, setSpecies] = useState([]);
+  const [breeds, setBreeds] = useState([]);
+  const [loadingBreeds, setLoadingBreeds] = useState(false);
 
   useEffect(() => {
     loadPets();
+    loadSpecies();
   }, []);
+
+  useEffect(() => {
+    if (formData.speciesId) {
+      loadBreeds(formData.speciesId);
+    } else {
+      setBreeds([]);
+      setFormData(prev => ({ ...prev, breedId: '' }));
+    }
+  }, [formData.speciesId]);
+
+  const loadSpecies = async () => {
+    try {
+      const response = await speciesApi.getAll();
+      setSpecies(response.data || []);
+    } catch (error) {
+      console.error('Error cargando especies:', error);
+    }
+  };
+
+  const loadBreeds = async (speciesId) => {
+    setLoadingBreeds(true);
+    try {
+      const response = await speciesApi.getBreeds(speciesId);
+      setBreeds(response.data || []);
+    } catch (error) {
+      console.error('Error cargando razas:', error);
+      setBreeds([]);
+    } finally {
+      setLoadingBreeds(false);
+    }
+  };
 
   const loadPets = async () => {
     setLoading(true);
@@ -39,16 +75,26 @@ const AdminPets = () => {
     if (!query) return pets;
     const q = query.toLowerCase();
     return pets.filter((pet) =>
-      [pet.name, pet.species, pet.breed, pet.owner?.name, pet.owner?.email]
+      [
+        pet.name, 
+        pet.speciesName, 
+        pet.species?.name, 
+        pet.species, 
+        pet.breedName, 
+        pet.breed?.name, 
+        pet.breed, 
+        pet.owner?.name, 
+        pet.owner?.email
+      ]
         .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(q))
+        .some((value) => String(value).toLowerCase().includes(q))
     );
   }, [pets, query]);
 
   const buildPetPayload = (pet, overrides = {}) => ({
     name: overrides.name ?? pet.name ?? '',
-    species: overrides.species ?? pet.species ?? '',
-    breed: overrides.breed ?? pet.breed ?? '',
+    speciesId: overrides.speciesId ?? pet.speciesId ?? null,
+    breedId: overrides.breedId ?? pet.breedId ?? null,
     age: overrides.age ?? pet.age ?? 1,
     weight: overrides.weight ?? pet.weight ?? 1,
     sex: overrides.sex ?? pet.sex ?? 'M',
@@ -57,13 +103,14 @@ const AdminPets = () => {
 
   const openEdit = (pet) => {
     setEditingPet(pet);
+    console.log('Pet a editar:', pet);
     setFormData({
       name: pet.name || '',
-      species: pet.species || '',
-      breed: pet.breed || '',
+      speciesId: pet.species?.id || pet.speciesId || '',
+      breedId: pet.breed?.id || pet.breedId || '',
       age: pet.age || '',
       weight: pet.weight || '',
-      sex: pet.sex || 'M'
+      sex: pet.sex === 'Macho' ? 'M' : pet.sex === 'Hembra' ? 'F' : 'M'
     });
     setShowModal(true);
     setFeedback(null);
@@ -98,22 +145,26 @@ const AdminPets = () => {
     if (!editingPet) return;
 
     try {
-      const payload = buildPetPayload(editingPet, {
+      const payload = {
         name: formData.name.trim(),
-        species: formData.species.trim(),
-        breed: formData.breed.trim(),
+        speciesId: parseInt(formData.speciesId, 10),
+        breedId: parseInt(formData.breedId, 10),
         age: parseInt(formData.age, 10),
         weight: parseFloat(formData.weight),
-        sex: formData.sex
-      });
+        sex: formData.sex === 'M' ? 'Macho' : 'Hembra',
+        ownerId: editingPet.owner?.id || editingPet.ownerId
+      };
+      
+      console.log('Payload a enviar:', payload);
       await petApi.update(editingPet.id, payload);
       setFeedback({ type: 'success', message: 'Mascota actualizada correctamente' });
       setShowModal(false);
       setEditingPet(null);
-      setFormData({ name: '', species: '', breed: '', age: '', weight: '', sex: '' });
+      setFormData({ name: '', speciesId: '', breedId: '', age: '', weight: '', sex: '' });
       loadPets();
     } catch (error) {
       console.error('Error actualizando mascota:', error);
+      console.error('Detalle del error:', error.response?.data);
       setFeedback({ type: 'error', message: error.response?.data?.message || 'No se pudo actualizar la mascota' });
     }
   };
@@ -183,6 +234,10 @@ const AdminPets = () => {
                     Raza
                   </th>
                   <th className="px-4 py-3">
+                    <span className="material-icons inline align-middle text-base mr-2">wc</span>
+                    Sexo
+                  </th>
+                  <th className="px-4 py-3">
                     <span className="material-icons inline align-middle text-base mr-2">hourglass_empty</span>
                     Edad
                   </th>
@@ -204,8 +259,9 @@ const AdminPets = () => {
                 {filteredPets.map((pet) => (
                   <tr key={pet.id} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium text-gray-800">{pet.name}</td>
-                    <td className="px-4 py-3">{pet.species}</td>
-                    <td className="px-4 py-3">{pet.breed}</td>
+                    <td className="px-4 py-3">{pet.speciesName || pet.species?.name || pet.species || '—'}</td>
+                    <td className="px-4 py-3">{pet.breedName || pet.breed?.name || pet.breed || '—'}</td>
+                    <td className="px-4 py-3">{pet.sex || '—'}</td>
                     <td className="px-4 py-3">{pet.age}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col">
@@ -221,29 +277,11 @@ const AdminPets = () => {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex gap-2 justify-end">
-                        <button
-                          className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-md"
-                          onClick={() => openEdit(pet)}
-                          title="Editar mascota"
-                        >
-                          <span className="material-icons text-sm">edit</span>
-                        </button>
+                        <button onClick={() => openEdit(pet)} className="px-3 py-1.5 text-teal hover:bg-teal/10 rounded-md">Editar</button>
                         {pet.active !== false ? (
-                          <button
-                            className="px-3 py-1.5 text-sm text-orange-600 hover:bg-orange-50 rounded-md"
-                            onClick={() => handleDeactivate(pet.id)}
-                            title="Desactivar mascota"
-                          >
-                            <span className="material-icons text-sm">toggle_off</span>
-                          </button>
+                          <button onClick={() => handleDeactivate(pet.id)} className="px-3 py-1.5 text-yellow-700 hover:bg-yellow-50 rounded-md">Desactivar</button>
                         ) : (
-                          <button
-                            className="px-3 py-1.5 text-sm text-green-600 hover:bg-green-50 rounded-md"
-                            onClick={() => handleActivate(pet.id)}
-                            title="Activar mascota"
-                          >
-                            <span className="material-icons text-sm">toggle_on</span>
-                          </button>
+                          <button onClick={() => handleActivate(pet.id)} className="px-3 py-1.5 text-green-700 hover:bg-green-50 rounded-md">Activar</button>
                         )}
                       </div>
                     </td>
@@ -271,22 +309,27 @@ const AdminPets = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Especie</label>
-                  <input
-                    type="text"
-                    value={formData.species}
-                    onChange={(e) => setFormData({ ...formData, species: e.target.value })}
+                  <SearchableDropdown
+                    options={species}
+                    value={formData.speciesId}
+                    onChange={(val) => setFormData({ ...formData, speciesId: val || '', breedId: '' })}
+                    placeholder="Seleccionar especie"
                     required
-                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-teal"
+                    valueKey="id"
+                    getOptionLabel={(opt) => opt.name}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Raza</label>
-                  <input
-                    type="text"
-                    value={formData.breed}
-                    onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
+                  <SearchableDropdown
+                    options={breeds}
+                    value={formData.breedId}
+                    onChange={(val) => setFormData({ ...formData, breedId: val || '' })}
+                    placeholder={loadingBreeds ? "Cargando razas..." : formData.speciesId ? "Seleccionar raza" : "Primero selecciona una especie"}
                     required
-                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-teal"
+                    disabled={!formData.speciesId || loadingBreeds}
+                    valueKey="id"
+                    getOptionLabel={(opt) => opt.name}
                   />
                 </div>
                 <div>

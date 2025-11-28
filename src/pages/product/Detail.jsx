@@ -9,6 +9,7 @@ const Detail = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const { user } = useAuth();
   const role = user?.role;
   const navigate = useNavigate();
@@ -32,9 +33,13 @@ const Detail = () => {
   const handleAdd = async () => {
     try {
       await addToCart({ productId: product.id, quantity: 1 });
-      alert('Agregado al carrito');
+      setSuccessMessage(`${product.name} agregado al carrito exitosamente`);
+      setError(null);
+      setTimeout(() => setSuccessMessage(null), 4000);
     } catch (e) {
-      alert('Error al agregar');
+      setError(e.response?.data || 'Error al agregar al carrito. Por favor intenta de nuevo.');
+      setSuccessMessage(null);
+      setTimeout(() => setError(null), 4000);
     }
   };
 
@@ -45,6 +50,14 @@ const Detail = () => {
           <span className="material-icons">arrow_back</span>
           <span>Volver</span>
         </button>
+        
+        {error && <p className="text-red-600 bg-red-50 p-4 rounded-lg mb-4">{error}</p>}
+        {successMessage && (
+          <div className="flex items-center gap-2 text-green-700 bg-green-50 p-4 rounded-lg mb-4">
+            <span className="material-icons">check_circle</span>
+            <span>{successMessage}</span>
+          </div>
+        )}
         
         {loading && (
           <div className="flex justify-center items-center h-64">
