@@ -1,34 +1,48 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
-const ProductCard = ({ product, role, onAddToCart, onEdit, onDelete, onActivate, onSelect }) => {
+const ProductCard = ({ product, onSelect }) => {
+  const currencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        maximumFractionDigits: 0,
+      }),
+    []
+  );
+
   if (!product) return null;
   const { id, name, description, price, image, stock, active } = product;
 
   return (
-    <div className={`product-card border rounded p-3 shadow-sm flex flex-col gap-2 ${!active ? 'opacity-60' : ''}`}>      
-      {image && <img src={image} alt={name} className="h-40 object-cover w-full rounded" />}
-      <h3 className="font-semibold text-lg">{name}</h3>
+    <div
+      className={`border rounded-xl p-4 shadow-sm flex flex-col gap-3 bg-white transition hover:shadow-md ${
+        !active ? 'opacity-60' : ''
+      }`}
+    >
+      {image && (
+        <div className="h-44 w-full overflow-hidden rounded-lg bg-gray-50">
+          <img src={image} alt={name} className="h-full w-full object-cover" />
+        </div>
+      )}
+      <div>
+        <p className="text-xs uppercase tracking-wide text-gray-400">Producto</p>
+        <h3 className="font-semibold text-lg text-gray-900">{name}</h3>
+      </div>
       <p className="text-sm text-gray-600 line-clamp-3">{description}</p>
-      <div className="flex justify-between text-sm mt-auto">
-        <span className="font-medium">${price}</span>
-        <span>Stock: {stock}</span>
+      <div className="flex justify-between text-sm mt-auto text-gray-700">
+        <span className="font-semibold text-teal">
+          {currencyFormatter.format(Number(price) || 0)}
+        </span>
+        <span>Stock: {stock ?? 0}</span>
       </div>
-      <div className="flex flex-wrap gap-2 mt-2">
-        <button onClick={() => onSelect?.(id)} className="text-blue-600 text-sm underline">Detalle</button>
-        {role === 'OWNER' && active && stock > 0 && (
-          <button onClick={() => onAddToCart?.(id)} className="bg-green-600 text-white px-2 py-1 rounded text-sm">Agregar</button>
-        )}
-        {(role === 'ADMIN' || role === 'EMPLOYEE') && (
-          <>
-            <button onClick={() => onEdit?.(product)} className="bg-yellow-500 text-white px-2 py-1 rounded text-sm">Editar</button>
-            {active ? (
-              <button onClick={() => onDelete?.(id)} className="bg-red-600 text-white px-2 py-1 rounded text-sm">Eliminar</button>
-            ) : (
-              <button onClick={() => onActivate?.(id)} className="bg-indigo-600 text-white px-2 py-1 rounded text-sm">Activar</button>
-            )}
-          </>
-        )}
-      </div>
+      <button
+        onClick={() => onSelect?.(id)}
+        className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal text-white py-2 text-sm font-medium hover:bg-teal/90 transition-colors"
+      >
+        <span className="material-icons text-base">visibility</span>
+        Ver detalles
+      </button>
     </div>
   );
 };

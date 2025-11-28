@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { fetchCategories, createCategory, updateCategory, deleteCategory, fetchProducts } from '../../api/products';
+import { useNavigate } from 'react-router-dom';
 
 const CategoryForm = ({ category, onSubmit, onCancel }) => {
   const [form, setForm] = useState({ name: '', description: '' });
@@ -93,6 +94,7 @@ const Categories = () => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
+  const navigate = useNavigate();
 
   const loadCategories = async () => {
     setLoading(true);
@@ -202,7 +204,13 @@ const Categories = () => {
             <span className="material-icons">add_circle</span>
             Nueva Categoría
           </button>
-
+          <button
+            onClick={() => navigate('/admin/productos')}
+            className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <span className="material-icons">arrow_back</span>
+            Volver a productos
+          </button>
           <button
             onClick={loadCategories}
             className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
@@ -210,18 +218,27 @@ const Categories = () => {
             <span className="material-icons">refresh</span>
             Refrescar
           </button>
-
-          <div className="flex items-center gap-2 ml-auto">
-            <span className="material-icons text-gray-400">search</span>
-            <input
-              type="text"
-              placeholder="Buscar categorías"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-teal/40 bg-white"
-            />
-          </div>
         </div>
+
+        {!loading && !showForm && (
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Buscar categorías</label>
+                <div className="relative">
+                  <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                  <input
+                    type="text"
+                    placeholder="Nombre o descripción"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading && (
           <div className="flex justify-center items-center h-64">
