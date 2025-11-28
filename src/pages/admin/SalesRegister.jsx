@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { fetchProducts, manualPurchase } from '../../api/products';
+import { fetchProducts, manualPurchase, fetchCategories } from '../../api/products';
+import SearchableDropdown from '../../components/SearchableDropdown';
 import axios from '../../api/axios';
 
 const SalesRegister = () => {
   const [products, setProducts] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [draftItems, setDraftItems] = useState([]);
   const [userId, setUserId] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('CASH');
@@ -20,13 +23,24 @@ const SalesRegister = () => {
   const load = async () => {
     setLoading(true); setError(null);
     try {
-      const list = await fetchProducts({ active: true });
+      const [list, cats] = await Promise.all([
+        fetchProducts({ active: true }),
+        fetchCategories().catch(() => []),
+      ]);
       setProducts(list);
       setFiltered(list);
+      setCategories(cats);
       // Cargar usuarios (Owners). Backend devuelve todos los usuarios, filtramos por rol OWNER.
       try {
         const { data: allUsers } = await axios.get('/users');
-        setOwners(allUsers.filter(u => (u.role || u.roles?.includes?.('OWNER')) === 'OWNER'));
+        setOwners(
+          allUsers.filter((u) => {
+            const isOwner = (u.role || u.roles?.includes?.('OWNER')) === 'OWNER';
+            const allowInactive = u.email === 'consumidor.final@sistema.local';
+            const isActive = u.active !== false || allowInactive;
+            return isOwner && isActive;
+          }),
+        );
       } catch {}
     } catch (e) {
       setError('Error cargando productos');
@@ -36,11 +50,35 @@ const SalesRegister = () => {
   };
   useEffect(() => { load(); }, []);
 
-  const filterProducts = (value) => {
-    setSearch(value);
-    const v = value.toLowerCase();
-    setFiltered(products.filter(p => p.name.toLowerCase().includes(v) || p.description.toLowerCase().includes(v)));
+  const applyFilters = (textValue = search, categoryValue = categoryFilter) => {
+    const normalizedSearch = textValue.toLowerCase();
+    const filteredList = products.filter((p) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        p.name.toLowerCase().includes(normalizedSearch) ||
+        p.description.toLowerCase().includes(normalizedSearch);
+      const catId = p.categoryId || p.category?.id;
+      const matchesCategory = !categoryValue || String(catId) === String(categoryValue);
+      const isActive = p.active !== false;
+      return matchesSearch && matchesCategory && isActive;
+    });
+    setFiltered(filteredList);
   };
+
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    applyFilters(value, categoryFilter);
+  };
+
+  const handleCategoryChange = (value) => {
+    setCategoryFilter(value);
+    applyFilters(search, value);
+  };
+
+  useEffect(() => {
+    applyFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products]);
 
   const addLine = (product) => {
     setDraftItems(items => {
@@ -95,18 +133,53 @@ const SalesRegister = () => {
         </div>
         
         {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 mb-4 text-sm">{error}</div>}
-        {success && <div className="bg-green-50 border border-green-200 text-green-700 rounded p-3 mb-4 text-sm">{success}</div>}
+        {success && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 text-center space-y-4">
+              <span className="material-icons text-5xl text-green-500">check_circle</span>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-1">Venta registrada</h2>
+                <p className="text-gray-600">{success}</p>
+              </div>
+              <button
+                onClick={() => setSuccess(null)}
+                className="px-6 py-2 bg-teal text-white rounded-lg shadow-teal-sm hover:shadow-teal-lg"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-gray-800 flex items-center gap-2"><span className="material-icons text-teal">inventory_2</span> Productos Disponibles</h3>
-            <input
-              value={search}
-              onChange={(e) => filterProducts(e.target.value)}
-              placeholder="Buscar productos"
-              className="border border-gray-300 rounded px-3 py-2 text-sm w-64"
-            />
-          </div>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+              <h3 className="font-medium text-gray-800 flex items-center gap-2">
+                <span className="material-icons text-teal">inventory_2</span> Productos Disponibles
+              </h3>
+              <div className="flex flex-wrap gap-3 items-center">
+                <div className="relative">
+                  <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                  <input
+                    value={search}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    placeholder="Buscar productos"
+                    className="border border-gray-300 rounded px-3 py-2 text-sm w-56 pl-10 focus:outline-none focus:ring-2 focus:ring-teal"
+                  />
+                </div>
+                <SearchableDropdown
+                  options={[
+                    { id: '', name: 'Todas las categorías' },
+                    ...categories.filter((c) => c.active !== false),
+                  ]}
+                  value={categoryFilter}
+                  onChange={(val) => handleCategoryChange(val || '')}
+                  placeholder="Categoría"
+                  getOptionLabel={(option) => option?.name || ''}
+                  valueKey="id"
+                  className="w-60"
+                />
+              </div>
+            </div>
           {loading && <p className="text-sm text-gray-500">Cargando...</p>}
           {!loading && (
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -130,21 +203,38 @@ const SalesRegister = () => {
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cliente (Owner)</label>
-              <select value={userId} onChange={(e) => setUserId(e.target.value)} required className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
-                <option value="">-- Seleccionar Owner --</option>
-                {owners.map(o => (
-                  <option key={o.id} value={o.id}>{o.name || o.email} (#{o.id})</option>
-                ))}
-              </select>
+              <SearchableDropdown
+                options={[
+                  { id: '', name: '-- Seleccionar Owner --' },
+                  ...owners.map((o) => ({
+                    id: String(o.id),
+                    name: `${o.name || o.email} (#${o.id})`,
+                  })),
+                ]}
+                value={userId ? String(userId) : ''}
+                onChange={(val) => setUserId(val || '')}
+                placeholder="Selecciona un owner"
+                valueKey="id"
+                getOptionLabel={(opt) => opt?.name || ''}
+                required
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
-              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2">
-                <option value="CASH">Efectivo</option>
-                <option value="CARD">Tarjeta</option>
-                <option value="TRANSFER">Transferencia</option>
-                <option value="OTHER">Otro</option>
-              </select>
+              <SearchableDropdown
+                options={[
+                  { id: 'CASH', name: 'Efectivo' },
+                  { id: 'CARD', name: 'Tarjeta' },
+                  { id: 'TRANSFER', name: 'Transferencia' },
+                  { id: 'OTHER', name: 'Otro' },
+                ]}
+                value={paymentMethod}
+                onChange={(val) => setPaymentMethod(val || 'CASH')}
+                placeholder="Selecciona un método"
+                valueKey="id"
+                getOptionLabel={(opt) => opt?.name || ''}
+                required
+              />
             </div>
           </div>
           

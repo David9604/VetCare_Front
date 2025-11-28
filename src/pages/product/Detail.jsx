@@ -57,8 +57,12 @@ const Detail = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex flex-col md:flex-row gap-6">
               {product.image && (
-                <div className="md:w-1/2">
-                  <img src={product.image} alt={product.name} className="w-full h-80 object-cover rounded-lg" />
+                <div className="md:w-1/2 bg-gray-50 rounded-lg p-2 flex items-center justify-center">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-auto rounded-md object-contain"
+                  />
                 </div>
               )}
               <div className="flex-1">

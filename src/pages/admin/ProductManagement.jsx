@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { fetchProducts, createProduct, updateProduct, deleteProduct, activateProduct, fetchCategories } from '../../api/products';
 import ProductForm from '../../components/ProductForm';
 import ProductTable from '../../components/ProductTable';
 import DashboardLayout from '../../components/DashboardLayout';
+import ProductFilters from '../../components/ProductFilters';
 import { useNavigate } from 'react-router-dom';
 
 const ProductManagement = () => {
@@ -11,10 +12,17 @@ const ProductManagement = () => {
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [search, setSearch] = useState('');
   const [categories, setCategories] = useState([]);
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [filters, setFilters] = useState({
+    text: '',
+    minPrice: '',
+    maxPrice: '',
+    activeOnly: true,
+    categoryId: '',
+  });
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const navigate = useNavigate();
+  const handleFilterChange = useCallback((payload) => setFilters(payload), []);
 
   const load = async () => {
     setLoading(true);
@@ -55,22 +63,32 @@ const ProductManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Eliminar producto?')) return;
+  const handleDelete = (product) => {
+    setDeleteConfirm(product);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
     try {
-      await deleteProduct(id);
+      await deleteProduct(deleteConfirm.id);
+      setDeleteConfirm(null);
       await load();
     } catch (e) {
       alert('Error eliminando');
     }
   };
 
-  const handleActivate = async (id) => {
+  const handleToggleActive = async (product) => {
     try {
-      await activateProduct(id);
+      if (product.active) {
+        handleDelete(product);
+        return;
+      } else {
+        await activateProduct(product.id);
+      }
       await load();
     } catch (e) {
-      alert('Error activando');
+      alert(product.active ? 'Error desactivando' : 'Error activando');
     }
   };
 
@@ -85,6 +103,19 @@ const ProductManagement = () => {
   };
 
   const onSelect = (id) => navigate(`/productos/${id}`);
+
+  const filteredProducts = products.filter((p) => {
+    const priceValue = typeof p.price === 'number' ? p.price : parseFloat(p.price || 0);
+    const matchText = filters.text
+      ? [p.name, p.description].some((field) => field?.toLowerCase().includes(filters.text.toLowerCase()))
+      : true;
+    const cid = p.categoryId || p.category?.id;
+    const matchCategory = filters.categoryId ? String(cid) === String(filters.categoryId) : true;
+    const matchActive = filters.activeOnly ? p.active !== false : true;
+    const matchMin = filters.minPrice ? priceValue >= parseFloat(filters.minPrice) : true;
+    const matchMax = filters.maxPrice ? priceValue <= parseFloat(filters.maxPrice) : true;
+    return matchText && matchCategory && matchActive && matchMin && matchMax;
+  });
 
   return (
     <DashboardLayout>
@@ -114,25 +145,16 @@ const ProductManagement = () => {
             <span className="material-icons">refresh</span>
             Refrescar
           </button>
-          <div className="flex items-center gap-2 ml-auto">
-            <span className="material-icons text-gray-400">search</span>
-            <input
-              type="text"
-              placeholder="Buscar por nombre"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-teal/40 bg-white"
-            />
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-teal/40 bg-white"
-            >
-              <option value="">Todas las categorías</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
         </div>
+        
+        {!showForm && (
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <ProductFilters
+              categories={categories}
+              onChange={handleFilterChange}
+            />
+          </div>
+        )}
         
         {loading && (
           <div className="flex justify-center items-center h-64">
@@ -143,23 +165,18 @@ const ProductManagement = () => {
         {!showForm && !loading && (
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <ProductTable
-              products={products.filter(p => {
-                const matchName = p.name.toLowerCase().includes(search.toLowerCase());
-                const cid = p.categoryId || p.category?.id;
-                const matchCat = !categoryFilter || cid == categoryFilter;
-                return matchName && matchCat;
-              })}
+              products={filteredProducts}
               role="ADMIN"
               onEdit={onEdit}
               onDelete={handleDelete}
-              onActivate={handleActivate}
+              onToggleActive={handleToggleActive}
               onSelect={onSelect}
             />
           </div>
         )}
         
         {showForm && (
-          <div className="max-w-2xl bg-white rounded-lg shadow-sm p-6">
+          <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <span className="material-icons text-teal">{editing ? 'edit' : 'add_box'}</span>
               {editing ? 'Editar Producto' : 'Nuevo Producto'}
@@ -170,6 +187,32 @@ const ProductManagement = () => {
               onSubmit={editing ? handleUpdate : handleCreate}
               onCancel={() => { setShowForm(false); setEditing(null); }}
             />
+          </div>
+        )}
+
+        {deleteConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Confirmar eliminación</h2>
+              <p className="text-gray-600 mb-6">
+                ¿Estás seguro de que deseas eliminar el producto{' '}
+                <span className="font-semibold">"{deleteConfirm.name}"</span>? Esta acción no se puede deshacer.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

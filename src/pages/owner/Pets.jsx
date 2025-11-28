@@ -28,6 +28,10 @@ const OwnerPets = () => {
     { path: '/owner/pets', icon: 'pets', label: 'Mis Mascotas' },
     { path: '/owner/appointments', icon: 'event', label: 'Mis Citas' },
     { path: '/owner/history', icon: 'history', label: 'Historial Médico' },
+    { path: '/productos', icon: 'store', label: 'Productos' },
+    { path: '/owner/cart', icon: 'shopping_cart', label: 'Carrito' },
+    { path: '/owner/purchases', icon: 'receipt_long', label: 'Mis Compras' },
+    { path: '/profile', icon: 'account_circle', label: 'Mi Perfil' },
   ];
 
   useEffect(() => {
