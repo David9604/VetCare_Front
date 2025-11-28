@@ -3,12 +3,15 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/icon_dog.svg';
 
 const navLinks = [
+  { to: '/servicios', label: 'Nuestros Servicios' },
+  { to: '/productos-catalogo', label: 'Productos' },
   { to: '/nuestro-equipo', label: 'Nuestro Equipo' },
   { to: '/contacto', label: 'Contacto' },
 ];
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-50 bg-white shadow">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6">

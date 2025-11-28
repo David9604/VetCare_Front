@@ -1,7 +1,10 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { authApi } from '../api/services';
 
 const AuthContext = createContext(null);
+
+// Tiempo de inactividad en milisegundos (5 minutos)
+const INACTIVITY_TIMEOUT = 5 * 60 * 1000;
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -14,6 +17,52 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const inactivityTimerRef = useRef(null);
+
+  // Función para resetear el temporizador de inactividad
+  const resetInactivityTimer = () => {
+    // Limpiar el temporizador anterior
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+
+    // Solo configurar el temporizador si hay un usuario logueado
+    if (user) {
+      inactivityTimerRef.current = setTimeout(() => {
+        console.log('Sesión cerrada por inactividad');
+        logout();
+      }, INACTIVITY_TIMEOUT);
+    }
+  };
+
+  // Detectar actividad del usuario
+  useEffect(() => {
+    if (!user) return;
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+
+    const handleActivity = () => {
+      resetInactivityTimer();
+    };
+
+    // Agregar listeners para detectar actividad
+    events.forEach(event => {
+      window.addEventListener(event, handleActivity);
+    });
+
+    // Iniciar el temporizador
+    resetInactivityTimer();
+
+    // Cleanup
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleActivity);
+      });
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, [user]);
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -79,6 +128,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    // Limpiar el temporizador de inactividad
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+
     try {
       // Llamar al endpoint de logout para limpiar la cookie del servidor
       await authApi.logout();

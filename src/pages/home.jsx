@@ -1,11 +1,62 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Footer from '../components/footer';
 import ServiceCard from '../components/ServiceCard';
 import TestimonialCard from '../components/TestimonialCard';
 import ChatWidget from '../components/ChatWidget';
+import ProductCard from '../components/ProductCard';
+import { serviceApi } from '../api/services';
+import { fetchProducts } from '../api/products';
 
 const Home = () => {
+  const [services, setServices] = useState([]);
+  const [loadingServices, setLoadingServices] = useState(true);
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const response = await serviceApi.getAll();
+        // Obtener servicios activos
+        const activeServices = (response.data || []).filter(s => s.active);
+        
+        // Seleccionar 3 servicios aleatorios
+        const shuffled = [...activeServices].sort(() => Math.random() - 0.5);
+        const randomServices = shuffled.slice(0, 3);
+        
+        setServices(randomServices);
+      } catch (error) {
+        console.error('Error cargando servicios:', error);
+        // Si hay error, mantener array vacío para mostrar servicios estáticos como fallback
+      } finally {
+        setLoadingServices(false);
+      }
+    };
+    loadServices();
+  }, []);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const productList = await fetchProducts();
+        // Obtener productos activos
+        const activeProducts = (productList || []).filter(p => p.active);
+        
+        // Seleccionar 3 productos aleatorios
+        const shuffled = [...activeProducts].sort(() => Math.random() - 0.5);
+        const randomProducts = shuffled.slice(0, 3);
+        
+        setProducts(randomProducts);
+      } catch (error) {
+        console.error('Error cargando productos:', error);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+    loadProducts();
+  }, []);
+
   return (
     <div className="flex flex-col">
       {/* Hero */}
@@ -48,22 +99,79 @@ const Home = () => {
           <p className="text-center text-gray-600 max-w-3xl mx-auto mb-12 leading-relaxed">
             Ofrecemos una gama completa de servicios para garantizar la salud y felicidad de tu mascota, con la comodidad de gestionarlo todo online.
           </p>
-          <div className="grid gap-8 md:grid-cols-3">
-            <ServiceCard
-              icon="date_range"
-              title="Gestión de Citas Online"
-              description="Agenda, reprograma o cancela citas para tu mascota de forma fácil y rápida desde nuestro portal."
-            />
-            <ServiceCard
-              icon="local_hospital"
-              title="Atención Médica Integral"
-              description="Desde consultas de rutina y vacunaciones hasta cirugías y cuidados de emergencia."
-            />
-            <ServiceCard
-              icon="description"
-              title="Historial Clínico Digital"
-              description="Accede al historial de salud completo de tu mascota en cualquier momento y lugar."
-            />
+          
+          {loadingServices ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal"></div>
+            </div>
+          ) : services.length > 0 ? (
+            <div className="grid gap-8 md:grid-cols-3">
+              {services.map((service) => (
+                <ServiceCard
+                  key={service.id}
+                  icon={service.requiresVeterinarian ? "medical_services" : "home_repair_service"}
+                  title={service.name}
+                  description={service.description}
+                  price={service.price}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-8 md:grid-cols-3">
+              <ServiceCard
+                icon="date_range"
+                title="Gestión de Citas Online"
+                description="Agenda, reprograma o cancela citas para tu mascota de forma fácil y rápida desde nuestro portal."
+              />
+              <ServiceCard
+                icon="local_hospital"
+                title="Atención Médica Integral"
+                description="Desde consultas de rutina y vacunaciones hasta cirugías y cuidados de emergencia."
+              />
+              <ServiceCard
+                icon="description"
+                title="Historial Clínico Digital"
+                description="Accede al historial de salud completo de tu mascota en cualquier momento y lugar."
+              />
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Productos */}
+      <section className="bg-white py-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-4">Productos Destacados</h2>
+          <p className="text-center text-gray-600 max-w-3xl mx-auto mb-12 leading-relaxed">
+            Encuentra todo lo que necesitas para el cuidado de tu mascota en nuestra tienda online.
+          </p>
+          
+          {loadingProducts ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal"></div>
+            </div>
+          ) : products.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-3">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onSelect={(id) => window.location.href = `/productos/${id}`}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500">No hay productos disponibles en este momento</p>
+          )}
+          
+          <div className="text-center mt-8">
+            <Link
+              to="/productos-catalogo"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-teal text-white rounded-lg font-semibold hover:bg-teal-dark transition-colors"
+            >
+              <span>Ver todos los productos</span>
+              <span className="material-icons">arrow_forward</span>
+            </Link>
           </div>
         </div>
       </section>

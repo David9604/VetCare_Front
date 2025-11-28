@@ -6,6 +6,8 @@ const linkGroup = [
     title: 'Nuestra Clínica',
     links: [
       { to: '/nuestro-equipo', label: 'Nuestro Equipo' },
+      { to: '/servicios', label: 'Nuestros Servicios' },
+      { to: '/productos-catalogo', label: 'Productos' },
     ],
   },
   {

@@ -62,6 +62,21 @@ const DashboardLayout = ({ children, navigation }) => {
     ? navigation
     : defaultNavigationByRole[user?.role] || [];
 
+  const getDashboardPath = () => {
+    switch (user?.role) {
+      case 'OWNER':
+        return '/owner/dashboard';
+      case 'VETERINARIAN':
+        return '/veterinarian/dashboard';
+      case 'EMPLOYEE':
+        return '/employee/dashboard';
+      case 'ADMIN':
+        return '/admin/dashboard';
+      default:
+        return '/';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Navbar */}
@@ -75,7 +90,7 @@ const DashboardLayout = ({ children, navigation }) => {
               >
                 <span className="material-icons">menu</span>
               </button>
-              <Link to="/" className="flex items-center gap-2 ml-2 md:ml-0">
+              <Link to={getDashboardPath()} className="flex items-center gap-2 ml-2 md:ml-0">
                 <img src={logo} alt="VetCare" className="w-8 h-8" />
                 <span className="text-xl font-bold text-gray-800">VetCare</span>
               </Link>

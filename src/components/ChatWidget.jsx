@@ -76,7 +76,11 @@ const ChatWidget = () => {
         setShowWelcome(false);
       }, 5000); // Se oculta después de 5 segundos
     } else {
+      // Ocultar inmediatamente cuando no hay usuario (logout)
       setShowWelcome(false);
+      if (welcomeTimeoutRef.current) {
+        clearTimeout(welcomeTimeoutRef.current);
+      }
     }
     
     return () => {

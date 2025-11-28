@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/home';
 import Login from './pages/login';
@@ -41,8 +41,32 @@ import Navbar from './components/navbar';
 import Footer from './components/footer';
 import Catalog from './pages/product/Catalog';
 import Detail from './pages/product/Detail';
+import ServicesPage from './pages/ServicesPage';
+import ProductCatalogPublic from './pages/ProductCatalogPublic';
 import './App.css';
 import './styles/products.css';
+
+// Componente para redirigir usuarios autenticados desde home
+const HomeOrDashboard = () => {
+  const { user } = useAuth();
+  
+  if (user) {
+    switch (user.role) {
+      case 'OWNER':
+        return <Navigate to="/owner/dashboard" replace />;
+      case 'VETERINARIAN':
+        return <Navigate to="/veterinarian/dashboard" replace />;
+      case 'EMPLOYEE':
+        return <Navigate to="/employee/dashboard" replace />;
+      case 'ADMIN':
+        return <Navigate to="/admin/dashboard" replace />;
+      default:
+        return <><Navbar /><Home /></>;
+    }
+  }
+  
+  return <><Navbar /><Home /></>;
+};
 
 function App() {
   return (
@@ -50,7 +74,7 @@ function App() {
       <Router>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<><Navbar /><Home /></>} />
+          <Route path="/" element={<HomeOrDashboard />} />
           <Route path="/login" element={<><Navbar /><Login /><Footer /></>} />
           <Route path="/registro" element={<><Navbar /><Register /><Footer /></>} />
           <Route path="/recuperar-password" element={<><Navbar /><RecoverPassword /></>} />
@@ -59,6 +83,8 @@ function App() {
           <Route path="/privacidad" element={<><Navbar /><LegalPrivacy /></>} />
           <Route path="/nuestro-equipo" element={<><Navbar /><OurTeam /></>} />
           <Route path="/contacto" element={<><Navbar /><Contact /></>} />
+          <Route path="/servicios" element={<><Navbar /><ServicesPage /><Footer /></>} />
+          <Route path="/productos-catalogo" element={<><Navbar /><ProductCatalogPublic /><Footer /></>} />
 
           {/* Catálogo Productos (roles autenticados) */}
           <Route
