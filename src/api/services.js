@@ -19,6 +19,10 @@ export const authApi = {
   logout: () => axiosInstance.post('/auth/logout'),
   updateProfile: (id, data) => axiosInstance.put(`/users/${id}`, data),
   changePassword: (payload) => axiosInstance.put('/users/change-password', payload),
+  forgotPassword: (email) => axiosInstance.post('/auth/forgot-password', { email }),
+  verifyOtp: ({ email, otp }) => axiosInstance.post('/auth/verify-otp', { email, otp }),
+  resetPassword: ({ email, otp, newPassword, confirmPassword }) =>
+    axiosInstance.post('/auth/reset-password', { email, otp, newPassword, confirmPassword }),
 };
 
 export const petApi = {
