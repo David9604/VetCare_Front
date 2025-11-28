@@ -8,9 +8,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/ap
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
   withCredentials: true, // Enviar cookies para sesiones basadas en JSESSIONID / Spring Security
 });
 

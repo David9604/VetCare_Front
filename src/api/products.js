@@ -12,14 +12,25 @@ export const fetchProductById = async (id) => {
   return data; // ProductResponseDTO
 };
 
+const buildProductFormData = (payload) => {
+  const { imageFile, ...rest } = payload;
+  const formData = new FormData();
+  formData.append('product', new Blob([JSON.stringify(rest)], { type: 'application/json' }));
+  if (imageFile) {
+    formData.append('image', imageFile);
+  }
+  return formData;
+};
+
 export const createProduct = async (payload) => {
-  // payload: { name, description, price, image, stock }
-  const { data } = await axios.post('/products', payload);
+  const formData = buildProductFormData(payload);
+  const { data } = await axios.post('/products', formData);
   return data;
 };
 
 export const updateProduct = async (id, payload) => {
-  const { data } = await axios.put(`/products/${id}`, payload);
+  const formData = buildProductFormData(payload);
+  const { data } = await axios.put(`/products/${id}`, formData);
   return data;
 };
 
