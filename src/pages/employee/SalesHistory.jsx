@@ -1,71 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { fetchAllPurchases, completePurchase, cancelPurchase } from '../../api/products';
-
-const PurchasesTable = ({ data, onComplete, onCancel }) => {
-  return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-sm">
-        <thead>
-          <tr className="bg-gray-100 text-gray-700">
-            <th className="px-3 py-2 text-left">ID</th>
-            <th className="px-3 py-2 text-left">Fecha</th>
-            <th className="px-3 py-2 text-left">Cliente</th>
-            <th className="px-3 py-2 text-left">Total</th>
-            <th className="px-3 py-2 text-left">Estado</th>
-            <th className="px-3 py-2 text-left">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.length === 0 && (
-            <tr>
-              <td colSpan={6} className="px-3 py-6 text-center text-gray-500">Sin resultados</td>
-            </tr>
-          )}
-          {data.map(p => (
-            <tr key={p.id} className="border-b last:border-b-0 hover:bg-gray-50">
-              <td className="px-3 py-2 font-mono text-xs">{p.id}</td>
-              <td className="px-3 py-2">{new Date(p.purchaseDate).toLocaleString()}</td>
-              <td className="px-3 py-2">{p.userEmail || `ID: ${p.userId}`}</td>
-              <td className="px-3 py-2">${p.totalAmount?.toFixed(2)}</td>
-              <td className="px-3 py-2">
-                <span className={`px-2 py-1 rounded text-xs font-medium ${p.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : p.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{p.status}</span>
-              </td>
-              <td className="px-3 py-2 flex gap-2">
-                {p.status === 'PENDING' && (
-                  <>
-                    <button onClick={() => onComplete(p.id)} className="px-2 py-1 text-xs bg-green-600 text-white rounded">Completar</button>
-                    <button onClick={() => onCancel(p.id)} className="px-2 py-1 text-xs bg-red-600 text-white rounded">Cancelar</button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
+import SearchableDropdown from '../../components/SearchableDropdown';
 
 const SalesHistoryEmployee = () => {
   const [items, setItems] = useState([]);
   const [pageInfo, setPageInfo] = useState({ page: 0, size: 10, totalPages: 0, totalElements: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [status, setStatus] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const currencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        maximumFractionDigits: 0,
+      }),
+    []
+  );
 
   const load = async (override = {}) => {
     setLoading(true);
     setError(null);
     try {
+      const nextStatus = override.filters?.status ?? statusFilter;
+      const nextStart = override.filters?.startDate ?? startDate;
+      const nextEnd = override.filters?.endDate ?? endDate;
       const params = {
         page: override.page ?? pageInfo.page,
         size: pageInfo.size,
-        status: status || undefined,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined
+        status: nextStatus || undefined,
+        startDate: nextStart || undefined,
+        endDate: nextEnd || undefined,
       };
       const data = await fetchAllPurchases(params);
       setItems(data.content || []);
@@ -73,7 +41,7 @@ const SalesHistoryEmployee = () => {
         page: data.number,
         size: data.size,
         totalPages: data.totalPages,
-        totalElements: data.totalElements
+        totalElements: data.totalElements,
       });
     } catch (e) {
       setError('Error cargando ventas');
@@ -82,9 +50,11 @@ const SalesHistoryEmployee = () => {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const applyFilters = () => load({ page: 0 });
   const changePage = (delta) => {
     const next = pageInfo.page + delta;
     if (next < 0 || next >= pageInfo.totalPages) return;
@@ -100,6 +70,7 @@ const SalesHistoryEmployee = () => {
       alert('Error completando');
     }
   };
+
   const handleCancel = async (id) => {
     if (!window.confirm('¿Cancelar venta?')) return;
     try {
@@ -122,47 +93,163 @@ const SalesHistoryEmployee = () => {
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-          <div className="grid md:grid-cols-5 gap-4">
-            <div className="flex flex-col">
-              <label className="text-xs font-medium">Estado</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value)} className="border px-2 py-1 rounded">
-                <option value="">Todos</option>
-                <option value="PENDING">Pendiente</option>
-                <option value="COMPLETED">Completado</option>
-                <option value="CANCELLED">Cancelado</option>
-              </select>
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Estado</label>
+              <SearchableDropdown
+                options={[
+                  { id: '', name: 'Todos' },
+                  { id: 'PENDING', name: 'Pending' },
+                  { id: 'COMPLETED', name: 'Completed' },
+                  { id: 'CANCELLED', name: 'Cancelled' },
+                ]}
+                value={statusFilter}
+                onChange={(val) => {
+                  const next = val ?? '';
+                  setStatusFilter(next);
+                  load({
+                    page: 0,
+                    filters: { status: next, startDate, endDate },
+                  });
+                }}
+                placeholder="Estado de venta"
+                valueKey="id"
+                getOptionLabel={(opt) => opt?.name || ''}
+              />
             </div>
-            <div className="flex flex-col">
-              <label className="text-xs font-medium">Desde</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="border px-2 py-1 rounded" />
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Desde</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setStartDate(next);
+                  load({
+                    page: 0,
+                    filters: { status: statusFilter, startDate: next, endDate },
+                  });
+                }}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal"
+              />
             </div>
-            <div className="flex flex-col">
-              <label className="text-xs font-medium">Hasta</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="border px-2 py-1 rounded" />
-            </div>
-            <div className="flex flex-col justify-end">
-              <button onClick={applyFilters} className="bg-teal text-white px-3 py-2 rounded text-sm font-medium">Aplicar</button>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Hasta</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setEndDate(next);
+                  load({
+                    page: 0,
+                    filters: { status: statusFilter, startDate, endDate: next },
+                  });
+                }}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal"
+              />
             </div>
           </div>
         </div>
-
-        {loading && (
-          <div className="flex justify-center items-center h-48">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal"></div>
-          </div>
-        )}
-        {error && <p className="text-red-600 bg-red-50 p-3 rounded mb-4 text-sm">{error}</p>}
-
         {!loading && (
           <div className="bg-white rounded-lg shadow-sm p-4">
-            <PurchasesTable data={items} onComplete={handleComplete} onCancel={handleCancel} />
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-600 border-b">
+                    <th className="px-4 py-3">
+                      <span className="material-icons inline align-middle text-base mr-2">tag</span>
+                      ID
+                    </th>
+                    <th className="px-4 py-3">
+                      <span className="material-icons inline align-middle text-base mr-2">event</span>
+                      Fecha
+                    </th>
+                    <th className="px-4 py-3">
+                      <span className="material-icons inline align-middle text-base mr-2">person</span>
+                      Cliente
+                    </th>
+                    <th className="px-4 py-3">
+                      <span className="material-icons inline align-middle text-base mr-2">attach_money</span>
+                      Total
+                    </th>
+                    <th className="px-4 py-3">
+                      <span className="material-icons inline align-middle text-base mr-2">check_circle</span>
+                      Estado
+                    </th>
+                    <th className="px-4 py-3 text-center">
+                      <span className="material-icons inline align-middle text-base mr-2">tune</span>
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                        No hay ventas que coincidan con los filtros.
+                      </td>
+                    </tr>
+                  )}
+                  {items.map((p) => (
+                    <tr key={p.id} className="border-b last:border-0 hover:bg-gray-50">
+                      <td className="px-4 py-3 font-mono text-xs text-gray-600">#{p.id}</td>
+                      <td className="px-4 py-3">{new Date(p.purchaseDate).toLocaleString()}</td>
+                      <td className="px-4 py-3">{p.userEmail || `ID: ${p.userId}`}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">{currencyFormatter.format(p.totalAmount || 0)}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                            p.status === 'COMPLETED'
+                              ? 'bg-green-100 text-green-800'
+                              : p.status === 'CANCELLED'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-yellow-100 text-yellow-700'
+                          }`}
+                        >
+                          {p.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {p.status === 'PENDING' ? (
+                          <div className="flex justify-center gap-2">
+                            <button
+                              onClick={() => handleComplete(p.id)}
+                              className="px-3 py-1.5 text-xs font-medium text-green-700 border border-green-300 rounded-md bg-green-50 hover:bg-green-100 transition-colors"
+                            >
+                              Completar
+                            </button>
+                            <button
+                              onClick={() => handleCancel(p.id)}
+                              className="px-3 py-1.5 text-xs font-medium text-red-700 border border-red-300 rounded-md bg-red-50 hover:bg-red-100 transition-colors"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <div className="flex items-center justify-between mt-4 text-sm">
               <div>
                 Página {pageInfo.page + 1} de {pageInfo.totalPages} &bull; {pageInfo.totalElements} ventas
               </div>
               <div className="flex gap-2">
-                <button onClick={() => changePage(-1)} disabled={pageInfo.page === 0} className="px-3 py-1 border rounded disabled:opacity-40">Anterior</button>
-                <button onClick={() => changePage(1)} disabled={pageInfo.page + 1 >= pageInfo.totalPages} className="px-3 py-1 border rounded disabled:opacity-40">Siguiente</button>
+                <button onClick={() => changePage(-1)} disabled={pageInfo.page === 0} className="px-3 py-1 border rounded disabled:opacity-40">
+                  Anterior
+                </button>
+                <button
+                  onClick={() => changePage(1)}
+                  disabled={pageInfo.page + 1 >= pageInfo.totalPages}
+                  className="px-3 py-1 border rounded disabled:opacity-40"
+                >
+                  Siguiente
+                </button>
               </div>
             </div>
           </div>
